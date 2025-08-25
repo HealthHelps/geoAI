@@ -695,7 +695,7 @@
             statusElement.innerHTML = '<div class="loading-indicator"></div>';
             
             // Load the GeoJSON file from GitHub
-            fetch('https://raw.githubusercontent.com/HealthHelps/geoAI/main/Barangays.geojson')
+            fetch('https://raw.githubusercontent.com/HealthHelps/geoAI/main/Barangays.json')
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
