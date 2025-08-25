@@ -2,175 +2,420 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>HealthHelp</title>
+  <title>HealthHelp geoAI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <!-- Leaflet Control Layers Tree (for togglable layers) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.control.layers.tree/dist/Leaflet.Control.Layers.Tree.css" />
   <!-- Leaflet-Geoman for drawing/uploading -->
   <link rel="stylesheet" href="https://unpkg.com/@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css"/>
-  <!-- Leaflet Timeline for storyboard -->
+  <!-- LayerTree control (for boundary toggling) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-layers-tree/dist/Leaflet.Control.Layers.Tree.css" />
+  <!-- leaflet-timeline for storyboard (optional) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet-timeline/dist/leaflet-timeline.min.css"/>
   <style>
-    body, html {
+    :root {
+      --primary: #b1002e;
+      --accent: #e43a3a;
+      --maroon: #380000;
+      --glass: rgba(56,0,0,0.92);
+      --glass-light: rgba(255,255,255,0.15);
+      --glass-dark: rgba(56,0,0,0.85);
+      --border: #e43a3a99;
+      --shadow: 0 6px 32px #98000055;
+      --radius: 20px;
+      --header-height: 60px;
+      --sidebar-width: 330px;
+      --sidebar-width-collapsed: 64px;
+      --transition: .33s cubic-bezier(.44,.12,.18,1.0);
+      --font: 'Segoe UI', 'Arial', sans-serif;
+    }
+    html, body {
       height: 100%;
       margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', 'Arial', sans-serif;
-      background: #380000;
+      font-family: var(--font);
+      background: var(--maroon);
       color: #fff;
+      overflow: hidden;
     }
     #header {
-      background: linear-gradient(90deg, #8B0000 75%, #380000 100%);
-      padding: 12px 24px;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--header-height);
+      z-index: 30;
+      background: linear-gradient(90deg, var(--primary) 65%, var(--maroon) 100%);
+      box-shadow: 0 4px 20px #5008;
       display: flex;
       align-items: center;
-      box-shadow: 0px 2px 12px #222;
+      padding: 0 30px;
+      gap: 18px;
     }
     #logo {
-      height: 48px;
-      margin-right: 18px;
-      border-radius: 12px;
-      box-shadow: 0 0 8px #fff4;
+      height: 44px;
+      border-radius: 14px;
+      box-shadow: 0 0 10px #fff4;
       background: #fff;
       object-fit: contain;
     }
     #title {
-      font-size: 2rem;
+      font-size: 2.1rem;
       font-weight: bold;
-      letter-spacing: 2px;
+      letter-spacing: 2.5px;
       color: #fff;
-      text-shadow: 0 2px 8px #600;
+      text-shadow: 0 2px 12px #600;
     }
     #map {
-      width: 100vw;
-      height: calc(100vh - 72px);
-      z-index: 1;
-      position: relative;
-    }
-    #sidebar {
       position: absolute;
-      top: 20px;
-      right: 24px;
-      z-index: 1000;
-      background: rgba(56,0,0,0.95);
-      color: #fff;
-      padding: 22px 18px 12px 18px;
-      border-radius: 18px;
-      box-shadow: 0 4px 24px #980000bb;
-      max-width: 340px;
-      min-width: 280px;
-      font-size: 1rem;
+      left: 0; top: var(--header-height); right: 0; bottom: 0;
+      width: 100vw;
+      height: calc(100vh - var(--header-height));
+      z-index: 1;
+      background: #332;
+      transition: background .25s;
     }
-    .section-title {
+
+    /* Sidebar */
+    #sidebar {
+      position: fixed;
+      top: calc(var(--header-height) + 20px);
+      right: 0;
+      height: calc(100vh - var(--header-height) - 40px);
+      width: var(--sidebar-width);
+      min-width: 220px;
+      max-width: 99vw;
+      z-index: 20;
+      background: var(--glass);
       color: #fff;
-      font-size: 1.1em;
+      border-radius: var(--radius) 0 0 var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px 26px 18px 29px;
+      transition: width var(--transition), min-width var(--transition), max-width var(--transition), padding var(--transition);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      overflow-x: hidden;
+      backdrop-filter: blur(12px);
+    }
+    #sidebar.collapsed {
+      width: var(--sidebar-width-collapsed);
+      min-width: var(--sidebar-width-collapsed);
+      max-width: var(--sidebar-width-collapsed);
+      padding: 18px 8px 18px 8px;
+      overflow: hidden;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    #sidebar .section-title {
+      font-size: 1.13em;
       font-weight: bold;
-      margin-bottom: 8px;
-      border-bottom: 1px solid #980000;
+      margin-bottom: 9px;
+      border-bottom: 1px solid var(--border);
       padding-bottom: 4px;
+      letter-spacing: 1.2px;
+      color: #fff;
+      transition: opacity .2s;
     }
-    .upload-group {
-      margin-bottom: 18px;
+    #sidebar.collapsed .section-title,
+    #sidebar.collapsed .sidebar-content {
+      opacity: 0;
+      pointer-events: none;
+      height: 0;
+      padding: 0;
+      margin: 0;
+    }
+    #sidebar-toggle-btn {
+      position: absolute;
+      left: -36px;
+      top: 20px;
+      width: 36px;
+      height: 44px;
+      background: var(--glass-dark);
+      border-radius: 24px 0 0 24px;
+      border: 2px solid var(--border);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4em;
+      cursor: pointer;
+      z-index: 60;
+      box-shadow: 0 2px 8px #98000066;
+      transition: left var(--transition), background var(--transition);
+    }
+    #sidebar.collapsed #sidebar-toggle-btn {
+      left: 0;
+      background: var(--glass-light);
+      color: var(--accent);
+    }
+    /* Upload Panel */
+    #upload-panel {
+      position: fixed;
+      top: calc(var(--header-height) + 26px);
+      right: var(--sidebar-width);
+      z-index: 25;
+      background: var(--glass-light);
+      padding: 18px 18px 10px 18px;
+      border-radius: 14px;
+      box-shadow: 0 2px 18px #98000066;
+      min-width: 240px;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      transition: right var(--transition), background .4s;
+      backdrop-filter: blur(7px);
+    }
+    #sidebar.collapsed + #upload-panel {
+      right: var(--sidebar-width-collapsed);
+    }
+    #upload-panel .section-title {
+      font-size: 1.06em;
+      margin-bottom: 7px;
     }
     .upload-group label {
-      font-size: 0.95em;
-      margin-bottom: 4px;
+      font-size: 0.97em;
+      margin-bottom: 2px;
       display: block;
+      color: #fff;
+      letter-spacing: .6px;
     }
-    .upload-group input {
+    .upload-group input[type="file"] {
       margin-bottom: 8px;
-      width: 100%;
+      width: 96%;
+      background: #fff0;
+      color: #fff;
+      border: 1px solid #e43a3a55;
+      border-radius: 7px;
+      padding: 2px 0;
+      font-size: 0.99em;
     }
-    #layer-controls, #storyboard-controls {
-      margin-bottom: 18px;
+    #save-data-btn, #clear-map-btn {
+      margin-bottom: 5px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 0.98em;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 10px #e43a3a22;
+      transition: background .17s;
+      margin-right: 4px;
+    }
+    #save-data-btn:hover, #clear-map-btn:hover {
+      background: #b1002e;
+    }
+    #upload-panel small {
+      color: #fae;
+      font-size: 0.93em;
+    }
+
+    /* Layer controls */
+    #layer-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 12px;
+    }
+    .layer-toggle {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 1em;
+      margin-bottom: 3px;
+      background: var(--glass-light);
+      padding: 3px 7px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background .2s;
+      border: 1px solid #fff1;
+    }
+    .layer-toggle input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Storyboard controls */
+    #storyboard-controls {
+      margin-bottom: 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: fit-content;
+      min-width: 180px;
+      max-width: 100%;
     }
     #storyboard-year {
       width: 100%;
-      margin-bottom: 8px;
+    }
+    #storyboard-year-value {
+      font-weight: bold;
+      color: var(--accent);
+      margin-left: 7px;
+      font-size: 1.04em;
+    }
+    #story-layer-select {
+      min-width: 160px;
+      max-width: 100%;
+      font-size: 1em;
+      border-radius: 8px;
+      background: var(--glass-light);
+      color: #fff;
+      border: 1px solid var(--accent);
+      padding: 5px 8px;
+      font-family: inherit;
+      box-shadow: 0 4px 16px #98000022;
+      transition: min-width .3s, max-width .3s, background .22s;
+      outline: none;
+    }
+    #sidebar:not(.collapsed) #story-layer-select {
+      max-width: calc(var(--sidebar-width) - 60px);
+      min-width: 160px;
+    }
+
+    /* Basemaps */
+    #basemap-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-bottom: 10px;
     }
     .basemap-btn {
-      display: block;
-      margin-bottom: 7px;
-      background: #600;
+      background: var(--glass-dark);
       color: #fff;
       border: none;
-      border-radius: 7px;
-      padding: 6px 9px;
-      font-size: 0.93em;
+      border-radius: 9px;
+      padding: 6px 13px;
+      font-size: 0.96em;
       cursor: pointer;
-      box-shadow: 0 2px 8px #400;
-      transition: background .15s;
+      box-shadow: 0 2px 10px #98000022;
+      font-family: inherit;
+      transition: background .17s;
+      margin-right: 5px;
     }
     .basemap-btn.selected, .basemap-btn:hover {
-      background: #C81E1E;
+      background: var(--accent);
     }
+
+    /* Attribute popup */
     .attribute-popup {
       min-width: 220px;
-      font-size: 1em;
+      font-size: 1.03em;
       color: #222;
+      background: #fff;
+      border-radius: 10px;
+      padding: 12px 11px;
+      box-shadow: 0 2px 14px #e43a3a33;
+      border: 1px solid var(--accent);
+      font-family: inherit;
     }
     ::selection {
       background: #C81E1E;
       color: #fff;
     }
+
+    /* Responsiveness */
     @media (max-width: 900px) {
       #sidebar {
         max-width: 98vw;
         min-width: 40vw;
-        right: 2vw;
-        top: 10vw;
       }
+      #upload-panel {
+        right: 2vw;
+        max-width: 97vw;
+      }
+    }
+    @media (max-width: 650px) {
+      #sidebar {
+        padding: 9px 4px 9px 7px;
+        font-size: 0.93em;
+      }
+      #upload-panel {
+        padding: 8px 8px 8px 8px;
+        font-size: .93em;
+      }
+      #header {
+        padding: 0 7px;
+      }
+      #logo { height: 28px;}
+      #title { font-size: 1.17rem;}
+    }
+
+    /* Animations */
+    .fade-in {
+      animation: fadein .7s ease;
+    }
+    @keyframes fadein {
+      from { opacity: 0; transform: translateY(15px);}
+      to { opacity: 1; transform: translateY(0);}
     }
   </style>
 </head>
 <body>
+  <!-- Header -->
   <div id="header">
     <img id="logo" src="HealthHelpLogo.png" alt="HealthHelp Logo">
-    <div id="title">HealthHelp</div>
+    <div id="title">HealthHelp geoAI</div>
   </div>
+
+  <!-- Main Map -->
   <div id="map"></div>
-  <div id="sidebar">
-    <div class="section-title">Layer Controls</div>
-    <div id="layer-controls"></div>
-    <div class="section-title">Thematic Storyboard</div>
-    <div id="storyboard-controls">
-      <label for="storyboard-year">Year:</label>
-      <input type="range" id="storyboard-year" min="2010" max="2025" value="2025" step="1" />
-      <span id="storyboard-year-value">2025</span>
-      <select id="story-layer-select">
-        <option value="maternal">Maternal/Newborn/Child Death Rate</option>
-        <option value="hiv">HIV/AIDS-related Death Rate</option>
-        <option value="facilities">Health Facilities Count</option>
-        <option value="poverty-maternal">High Poverty+Population+Maternal/Newborn/Child Death Rate</option>
-        <option value="poverty-hiv">High Poverty+Population+HIV/AIDS-related Death Rate</option>
-      </select>
-    </div>
-    <div class="section-title">Basemap</div>
-    <div id="basemap-controls">
-      <!-- Basemap buttons will be injected -->
-    </div>
-    <div class="section-title">Upload/Analyze</div>
-    <div class="upload-group">
-      <label for="upload-shapefile">Upload Shapefile (.zip):</label>
-      <input type="file" id="upload-shapefile" accept=".zip">
-      <label for="upload-geojson">Upload GeoJSON:</label>
-      <input type="file" id="upload-geojson" accept=".geojson,application/json">
-      <label for="upload-other">Upload Other Geospatial Files:</label>
-      <input type="file" id="upload-other" accept=".kml,.gpx,.csv">
-      <button class="basemap-btn" id="save-data-btn">Save Data Locally</button>
-    </div>
-    <div>
-      <small style="color:#e8a;">Click anywhere on the map to show attributes.</small>
+
+  <!-- Sidebar -->
+  <div id="sidebar" class="">
+    <div id="sidebar-toggle-btn" title="Collapse/Expand">&#9776;</div>
+    <div class="sidebar-content">
+      <div class="section-title">Layer Controls</div>
+      <div id="layer-controls"></div>
+      <div class="section-title">Thematic Storyboard</div>
+      <div id="storyboard-controls">
+        <label for="storyboard-year">Year:</label>
+        <input type="range" id="storyboard-year" min="2010" max="2025" value="2025" step="1" />
+        <span id="storyboard-year-value">2025</span>
+        <select id="story-layer-select">
+          <option value="maternal">Maternal/Newborn/Child Death Rate</option>
+          <option value="hiv">HIV/AIDS-related Death Rate</option>
+          <option value="facilities">Health Facilities Count</option>
+          <option value="poverty-maternal">High Poverty+Population+Maternal/Newborn/Child Death Rate</option>
+          <option value="poverty-hiv">High Poverty+Population+HIV/AIDS-related Death Rate</option>
+        </select>
+      </div>
+      <div class="section-title">Basemap</div>
+      <div id="basemap-controls"></div>
     </div>
   </div>
+
+  <!-- Upload/Analyze Panel (floating, always over map) -->
+  <div id="upload-panel" class="fade-in">
+    <div class="section-title">Upload / Analyze</div>
+    <form id="upload-form" autocomplete="off">
+      <div class="upload-group">
+        <label for="upload-shapefile">Upload Shapefile (.zip):</label>
+        <input type="file" id="upload-shapefile" accept=".zip">
+      </div>
+      <div class="upload-group">
+        <label for="upload-geojson">Upload GeoJSON:</label>
+        <input type="file" id="upload-geojson" accept=".geojson,application/json">
+      </div>
+      <div class="upload-group">
+        <label for="upload-other">Upload Other Geospatial Files:</label>
+        <input type="file" id="upload-other" accept=".kml,.gpx,.csv">
+      </div>
+      <div style="display:flex;gap:5px;">
+        <button type="button" id="save-data-btn">Save Data Locally</button>
+        <button type="button" id="clear-map-btn">Clear Map</button>
+      </div>
+    </form>
+    <small>Uploaded data stays until you clear the map.<br>Click anywhere on the map to show attributes.</small>
+  </div>
+
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <!-- Leaflet Control Layers Tree -->
-  <script src="https://unpkg.com/leaflet.control.layers.tree/dist/Leaflet.Control.Layers.Tree.js"></script>
   <!-- Leaflet-Geoman for draw/upload -->
   <script src="https://unpkg.com/@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.min.js"></script>
+  <!-- LayerTree control (for boundary toggling) -->
+  <script src="https://unpkg.com/leaflet-control-layers-tree/dist/Leaflet.Control.Layers.Tree.js"></script>
   <!-- leaflet-timeline -->
   <script src="https://unpkg.com/leaflet-timeline/dist/leaflet-timeline.min.js"></script>
   <!-- shp.js for reading zipped shapefiles -->
@@ -179,22 +424,19 @@
   <script src="https://unpkg.com/togeojson@0.16.0/dist/togeojson.min.js"></script>
   <!-- JSZip for zip file handling -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <!-- geoAI functions placeholder -->
   <script>
     // Map Initialization
-    const philippinesBounds = [[4.5, 116.8], [21.0, 127.0]];
     const map = L.map('map', {
       center: [12.8797, 121.7740],
       zoom: 6,
       minZoom: 5,
       maxZoom: 16,
-      maxBounds: philippinesBounds,
       attributionControl: false,
       zoomControl: true,
       preferCanvas: true
     });
 
-    // Basemap Layers (Open Source only)
+    // Basemap Layers
     const basemaps = {
       "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {id:'osm', attribution:'&copy; OpenStreetMap contributors'}),
       "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {id:'satellite', attribution:'&copy; ESRI, Maxar'}),
@@ -216,70 +458,95 @@
       btn.className = "basemap-btn" + (i===0 ? " selected" : "");
       btn.onclick = () => {
         Object.values(basemaps).forEach(l => map.removeLayer(l));
-        Object.keys(basemaps).forEach(k => {
-          basemapControlDiv.querySelectorAll(".basemap-btn")[i].classList.remove("selected");
-        });
+        basemapControlDiv.querySelectorAll(".basemap-btn").forEach(b => b.classList.remove("selected"));
         btn.classList.add("selected");
         basemaps[bm].addTo(map);
       };
       basemapControlDiv.appendChild(btn);
     });
 
-    // GeoAI Functions Placeholder
-    const geoAI = {
-      // Analyze, visualize, extract features, etc.
-      analyze: (data) => {
-        // Placeholder for advanced geoAI analysis
-        alert("geoAI: Analysis placeholder for uploaded data.");
-      },
-      visualize: (data) => {
-        // Placeholder for advanced geoAI visualization
-        alert("geoAI: Visualization placeholder for uploaded data.");
+    // Responsive sidebar width for storyboard dropdown
+    function adjustSidebarWidth() {
+      const sidebar = document.getElementById('sidebar');
+      if (!sidebar.classList.contains('collapsed')) {
+        // Find longest option
+        let select = document.getElementById('story-layer-select');
+        let longest = Array.from(select.options).reduce((a, o) => o.text.length > a ? o.text.length : a, 0);
+        let width = Math.max(330, longest * 10 + 120);
+        sidebar.style.width = width + "px";
+      } else {
+        sidebar.style.width = "64px";
       }
+    }
+    document.getElementById('story-layer-select').onchange = adjustSidebarWidth;
+    window.addEventListener('resize', adjustSidebarWidth);
+    setTimeout(adjustSidebarWidth, 1000);
+
+    // Sidebar expand/collapse
+    const sidebar = document.getElementById('sidebar');
+    const uploadPanel = document.getElementById('upload-panel');
+    document.getElementById('sidebar-toggle-btn').onclick = function () {
+      sidebar.classList.toggle('collapsed');
+      adjustSidebarWidth();
+      setTimeout(() => adjustSidebarWidth(), 350);
     };
 
-    // Boundary Layers - Placeholder URLs, replace with actual sources
-    const boundaryURLs = {
-      region: 'https://raw.githubusercontent.com/HealthHelps/geoAI/main/data/philippines_regions.geojson',
-      province: 'https://raw.githubusercontent.com/HealthHelps/geoAI/main/data/philippines_provinces.geojson',
-      municipality: 'https://raw.githubusercontent.com/HealthHelps/geoAI/main/data/philippines_municipalities.geojson',
-      barangay: 'https://raw.githubusercontent.com/HealthHelps/geoAI/main/data/philippines_barangays.geojson'
-    };
+    // Layer Controls
+    const boundarySources = [
+      {
+        name: "Philippines (Region)",
+        url: "https://github.com/HealthHelps/geoAI/raw/main/Philippines.zip",
+        color: "#b1002e"
+      },
+      {
+        name: "Provinces",
+        url: "https://github.com/HealthHelps/geoAI/raw/main/Provinces.zip",
+        color: "#e43a3a"
+      },
+      {
+        name: "Towns",
+        url: "https://github.com/HealthHelps/geoAI/raw/main/Towns.zip",
+        color: "#ffb0b0"
+      },
+      {
+        name: "Barangays",
+        url: "https://github.com/HealthHelps/geoAI/raw/main/Barangay.zip",
+        color: "#fbdcdc"
+      }
+    ];
     const boundaryLayers = {};
-    function styleBoundary(level) {
-      const colors = {
-        region: "#ad1d1d",
-        province: "#d45e5e",
-        municipality: "#ffb0b0",
-        barangay: "#fbdcdc"
-      };
+    function styleBoundary(color) {
       return {
-        color: colors[level] || "#ad1d1d",
+        color: color,
         fill: false,
-        weight: level==='barangay'? 0.5 : (level==='municipality'? 1 : (level==='province'? 1.3 : 2)),
+        weight: 2,
         opacity: 0.8
       };
     }
-    function addBoundaryLayer(level, url) {
+    function addBoundaryLayer(name, url, color) {
       fetch(url)
-        .then(res => res.json())
-        .then(geojson => {
-          boundaryLayers[level] = L.geoJson(geojson, {
-            style: styleBoundary(level),
-            onEachFeature: onEachFeature
+        .then(res => res.blob())
+        .then(blob => {
+          shp(blob).then(geojson => {
+            boundaryLayers[name] = L.geoJson(geojson, {
+              style: styleBoundary(color),
+              onEachFeature: onEachFeature
+            });
+            // Add layer toggle control
+            updateLayerControls();
           });
         });
     }
-    Object.entries(boundaryURLs).forEach(([level, url]) => addBoundaryLayer(level, url));
-
-    // Layer Controls (toggle)
+    boundarySources.forEach(b => addBoundaryLayer(b.name, b.url, b.color));
     function updateLayerControls() {
       const layerDiv = document.getElementById("layer-controls");
       layerDiv.innerHTML = '';
       Object.keys(boundaryLayers).forEach(level => {
+        const wrap = document.createElement("div");
+        wrap.className = "layer-toggle";
         const check = document.createElement("input");
         check.type = "checkbox";
-        check.id = `layer-${level}`;
+        check.id = `layer-${level.replace(/\s/g,'')}`;
         check.checked = false;
         check.onchange = (e) => {
           if (e.target.checked) map.addLayer(boundaryLayers[level]);
@@ -287,24 +554,23 @@
         };
         const lbl = document.createElement("label");
         lbl.htmlFor = check.id;
-        lbl.innerText = level.charAt(0).toUpperCase() + level.slice(1);
-        layerDiv.appendChild(check);
-        layerDiv.appendChild(lbl);
-        layerDiv.appendChild(document.createElement("br"));
+        lbl.innerText = level;
+        wrap.appendChild(check);
+        wrap.appendChild(lbl);
+        layerDiv.appendChild(wrap);
       });
     }
-    // Wait for layers to load
     setTimeout(updateLayerControls, 2000);
 
-    // Thematic Layer Data (fake demo data structure, replace with real data)
+    // Thematic Layer Data (demo only; replace with real)
     let thematicData = {
       maternal: {}, hiv: {}, facilities: {}, "poverty-maternal": {}, "poverty-hiv": {}
     };
-    // Load demo thematic polygons
     function loadThematicData() {
-      // For demo, just load region-level polygons and random values for each year (2010-2025)
-      fetch(boundaryURLs.region)
-        .then(res => res.json())
+      // Demo: region-level polygons and random values for each year
+      fetch(boundarySources[0].url)
+        .then(res => res.blob())
+        .then(blob => shp(blob))
         .then(geojson => {
           for (let type of Object.keys(thematicData)) {
             thematicData[type] = {};
@@ -327,10 +593,9 @@
     }
     loadThematicData();
 
-    // Health Facilities Points (demo only)
+    // Health Facilities Points (demo)
     let healthFacilities = L.layerGroup();
     function loadDemoFacilities() {
-      // Demo: random points, replace with actual source
       let demoData = [
         {name:"RHUs Manila", type:"RHU", lat:14.6, lng:120.98, services:["MNCH","FP","HIV/AIDS"], ownership:"public"},
         {name:"PHU Pampanga", type:"PHU", lat:15.05, lng:120.69, services:["MNCH"], ownership:"public"},
@@ -361,9 +626,7 @@
     let activeYear = 2025;
     let thematicLayer = null;
     function updateStoryboard() {
-      // Remove current thematic layer
       if (thematicLayer) map.removeLayer(thematicLayer);
-      // Add layer for selected story and year
       thematicLayer = thematicData[activeStoryLayer] && thematicData[activeStoryLayer][activeYear];
       if (thematicLayer) thematicLayer.addTo(map);
     }
@@ -375,19 +638,21 @@
     document.getElementById("story-layer-select").onchange = function(e){
       activeStoryLayer = e.target.value;
       updateStoryboard();
+      adjustSidebarWidth();
     };
     setTimeout(updateStoryboard, 2500);
 
-    // Upload/Save Functions
+    // Upload/Save/Clear Functions
+    let uploadedLayers = [];
     function handleFileUpload(file, type) {
       if (type === "shapefile") {
-        // Unzip and render as GeoJSON
         shp(file).then(function(geojson){
           const lyr = L.geoJson(geojson, {
             style: {color: "#ad1d1d", fillColor: "#d45e5e", fillOpacity: 0.45},
             onEachFeature: onEachFeature
           });
           lyr.addTo(map);
+          uploadedLayers.push(lyr);
           geoAI.analyze(geojson);
         });
       } else if (type === "geojson") {
@@ -399,11 +664,11 @@
             onEachFeature: onEachFeature
           });
           lyr.addTo(map);
+          uploadedLayers.push(lyr);
           geoAI.analyze(geojson);
         };
         reader.readAsText(file);
       } else {
-        // KML/GPX/other to GeoJSON
         const reader = new FileReader();
         reader.onload = function(e){
           let geojson;
@@ -416,7 +681,6 @@
             const gpx = parser.parseFromString(e.target.result, 'text/xml');
             geojson = toGeoJSON.gpx(gpx);
           } else if (file.name.endsWith('.csv')) {
-            // Very basic CSV to geojson: expects lat,lng columns
             geojson = {type:"FeatureCollection",features:[]};
             const lines = e.target.result.split('\n');
             for (let line of lines.slice(1)) {
@@ -435,6 +699,7 @@
               onEachFeature: onEachFeature
             });
             lyr.addTo(map);
+            uploadedLayers.push(lyr);
             geoAI.analyze(geojson);
           }
         };
@@ -443,18 +708,20 @@
     }
     document.getElementById("upload-shapefile").onchange = function(e){
       if (e.target.files.length) handleFileUpload(e.target.files[0], "shapefile");
+      e.target.value = '';
     };
     document.getElementById("upload-geojson").onchange = function(e){
       if (e.target.files.length) handleFileUpload(e.target.files[0], "geojson");
+      e.target.value = '';
     };
     document.getElementById("upload-other").onchange = function(e){
       if (e.target.files.length) handleFileUpload(e.target.files[0], "other");
+      e.target.value = '';
     };
     document.getElementById("save-data-btn").onclick = function(){
       alert("Local data saving is only available in modern browsers. Data will be downloaded as GeoJSON.");
-      // Collect all visible layers and download as geojson
       let allFeatures = [];
-      map.eachLayer(layer => {
+      uploadedLayers.forEach(layer => {
         if (layer.toGeoJSON) {
           try {
             const geojson = layer.toGeoJSON();
@@ -462,27 +729,48 @@
           } catch(e){}
         }
       });
+      if (allFeatures.length === 0) {
+        alert("No uploaded data to save.");
+        return;
+      }
       const blob = new Blob([JSON.stringify({type:'FeatureCollection',features:allFeatures})], {type: "application/json"});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = "healthhelp_data.geojson";
+      a.download = "healthhelp_uploaded_data.geojson";
       a.click();
     };
+    document.getElementById("clear-map-btn").onclick = function(){
+      uploadedLayers.forEach(lyr => map.removeLayer(lyr));
+      uploadedLayers = [];
+    };
 
-    // Show attributes popup on click
+    // geoAI Functions
+    const geoAI = {
+      analyze: (data) => {
+        // Placeholder for advanced geoAI analysis
+        // You can replace/extend with real analytics
+        console.log("geoAI: Analyzing data...", data);
+      },
+      visualize: (data) => {
+        // Placeholder for advanced geoAI visualization
+        console.log("geoAI: Visualizing data...", data);
+      }
+    };
+
+    // Attribute popup on click
     function onEachFeature(feature, layer) {
       layer.on('click', function (e) {
         let props = feature.properties || {};
         let html = '<div class="attribute-popup"><b>Attributes:</b><br>';
         for (let k in props) {
-          html += `<span style="color:#980000">${k}</span>: ${props[k]}<br>`;
+          html += `<span style="color:#980000;font-weight:bold;">${k}</span>: ${props[k]}<br>`;
         }
         html += '</div>';
         layer.bindPopup(html).openPopup();
       });
     }
     map.on('click', function(e){
-      // Show lat/lng popup
+      if (sidebar.classList.contains('collapsed')) return;
       L.popup()
         .setLatLng(e.latlng)
         .setContent(`<div class="attribute-popup"><b>Coordinates:</b><br>Lat: ${e.latlng.lat.toFixed(6)}<br>Lng: ${e.latlng.lng.toFixed(6)}</div>`)
@@ -507,6 +795,7 @@
     map.on('pm:create', e => {
       geoAI.visualize(e.layer.toGeoJSON());
       e.layer.bindPopup('<b>Custom Geometry</b>').openPopup();
+      uploadedLayers.push(e.layer);
     });
 
     // Add scale
@@ -515,11 +804,12 @@
     // Add attribution
     L.control.attribution({position:'bottomright'}).addAttribution('HealthHelp geoAI &copy; 2025 | <a href="https://github.com/HealthHelps/geoAI" style="color:#e8a;">Source</a>');
 
-    // Responsive sidebar
-    window.onresize = () => {
+    // Responsive map height
+    function resizeMap() {
       document.getElementById("map").style.height = (window.innerHeight - document.getElementById("header").offsetHeight) + "px";
-    };
-    window.dispatchEvent(new Event('resize'));
+    }
+    window.onresize = resizeMap;
+    resizeMap();
   </script>
 </body>
 </html>
