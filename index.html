@@ -272,6 +272,12 @@
             color: #666;
             margin-left: 10px;
         }
+        
+        .error-message {
+            color: #d9534f;
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -516,13 +522,44 @@
             barangays: null
         };
         
+        // Function to handle shapefile loading errors
+        function handleShapefileError(error, layerType) {
+            console.error(`Error loading ${layerType}:`, error);
+            const statusElement = document.getElementById(`${layerType}-status`);
+            statusElement.textContent = 'Error loading';
+            
+            // Add error message with retry button
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `Failed to load ${layerType}. 
+                <a href="#" onclick="load${layerType.charAt(0).toUpperCase() + layerType.slice(1)}(); return false;">
+                    Retry
+                </a>`;
+            
+            statusElement.parentNode.appendChild(errorDiv);
+            
+            // Add sample data for demonstration
+            if (layerType === 'province') {
+                addSampleProvinces();
+            }
+        }
+        
         // Load province boundaries from GitHub
         function loadProvinces() {
             const statusElement = document.getElementById('province-status');
+            // Clear any previous error messages
+            const errorMessages = statusElement.parentNode.querySelectorAll('.error-message');
+            errorMessages.forEach(msg => msg.remove());
+            
             statusElement.innerHTML = '<div class="loading-indicator"></div>';
             
             // Load the zipped shapefile from GitHub
             shp('https://healthhelps.github.io/geoAI/Provinces.zip').then(function(data) {
+                // Check if data was loaded correctly
+                if (!data || !data.features || data.features.length === 0) {
+                    throw new Error('No features found in the shapefile');
+                }
+                
                 // Style function for provinces
                 function provinceStyle(feature) {
                     return {
@@ -550,6 +587,9 @@
                     }
                 });
                 
+                // Clear any existing layers
+                provinceLayer.clearLayers();
+                
                 // Add to province layer
                 geoJsonLayer.addTo(provinceLayer);
                 loadedLayers.provinces = geoJsonLayer;
@@ -562,21 +602,26 @@
                     map.addLayer(provinceLayer);
                 }
             }).catch(function(error) {
-                console.error('Error loading provinces:', error);
-                statusElement.textContent = 'Error loading';
-                
-                // Add sample province data for demonstration if the real data fails to load
-                addSampleProvinces();
+                handleShapefileError(error, 'province');
             });
         }
         
         // Load municipality boundaries from GitHub
         function loadMunicipalities() {
             const statusElement = document.getElementById('municipality-status');
+            // Clear any previous error messages
+            const errorMessages = statusElement.parentNode.querySelectorAll('.error-message');
+            errorMessages.forEach(msg => msg.remove());
+            
             statusElement.innerHTML = '<div class="loading-indicator"></div>';
             
             // Load the zipped shapefile from GitHub
             shp('https://healthhelps.github.io/geoAI/Towns.zip').then(function(data) {
+                // Check if data was loaded correctly
+                if (!data || !data.features || data.features.length === 0) {
+                    throw new Error('No features found in the shapefile');
+                }
+                
                 // Style function for municipalities
                 function municipalityStyle(feature) {
                     return {
@@ -604,6 +649,9 @@
                     }
                 });
                 
+                // Clear any existing layers
+                municipalityLayer.clearLayers();
+                
                 // Add to municipality layer
                 geoJsonLayer.addTo(municipalityLayer);
                 loadedLayers.municipalities = geoJsonLayer;
@@ -616,18 +664,26 @@
                     map.addLayer(municipalityLayer);
                 }
             }).catch(function(error) {
-                console.error('Error loading municipalities:', error);
-                statusElement.textContent = 'Error loading';
+                handleShapefileError(error, 'municipality');
             });
         }
         
         // Load barangay boundaries from GitHub
         function loadBarangays() {
             const statusElement = document.getElementById('barangay-status');
+            // Clear any previous error messages
+            const errorMessages = statusElement.parentNode.querySelectorAll('.error-message');
+            errorMessages.forEach(msg => msg.remove());
+            
             statusElement.innerHTML = '<div class="loading-indicator"></div>';
             
             // Load the zipped shapefile from GitHub
             shp('https://healthhelps.github.io/geoAI/Barangay.zip').then(function(data) {
+                // Check if data was loaded correctly
+                if (!data || !data.features || data.features.length === 0) {
+                    throw new Error('No features found in the shapefile');
+                }
+                
                 // Style function for barangays
                 function barangayStyle(feature) {
                     return {
@@ -655,6 +711,9 @@
                     }
                 });
                 
+                // Clear any existing layers
+                barangayLayer.clearLayers();
+                
                 // Add to barangay layer
                 geoJsonLayer.addTo(barangayLayer);
                 loadedLayers.barangays = geoJsonLayer;
@@ -667,24 +726,45 @@
                     map.addLayer(barangayLayer);
                 }
             }).catch(function(error) {
-                console.error('Error loading barangays:', error);
-                statusElement.textContent = 'Error loading';
+                handleShapefileError(error, 'barangay');
             });
         }
         
         // Add sample provinces for demonstration if the real data fails to load
         function addSampleProvinces() {
-            // Sample province (just for demonstration)
-            const province = L.polygon([
-                [17.5, 120.2],
-                [17.5, 120.8],
-                [16.8, 120.8],
-                [16.8, 120.2]
-            ], {
-                color: '#cc0000',
-                weight: 2,
-                fillOpacity: 0.3
-            }).bindPopup('La Union Province').addTo(provinceLayer);
+            // Sample provinces (just for demonstration)
+            const provinces = [
+                {
+                    name: "La Union",
+                    coords: [
+                        [17.5, 120.2],
+                        [17.5, 120.8],
+                        [16.8, 120.8],
+                        [16.8, 120.2]
+                    ]
+                },
+                {
+                    name: "Pangasinan",
+                    coords: [
+                        [16.8, 119.8],
+                        [16.8, 120.5],
+                        [15.8, 120.5],
+                        [15.8, 119.8]
+                    ]
+                }
+            ];
+            
+            // Clear any existing layers
+            provinceLayer.clearLayers();
+            
+            // Add sample provinces
+            provinces.forEach(province => {
+                L.polygon(province.coords, {
+                    color: '#cc0000',
+                    weight: 2,
+                    fillOpacity: 0.3
+                }).bindPopup(province.name + ' Province (Sample Data)').addTo(provinceLayer);
+            });
             
             // If checkbox is checked, add to map
             if (document.getElementById('province-layer').checked) {
@@ -705,7 +785,7 @@
                 color: '#8b0000',
                 weight: 2,
                 fillOpacity: 0.1
-            }).bindPopup('Ilocos Region').addTo(regionLayer);
+            }).bindPopup('Ilocos Region (Sample Data)').addTo(regionLayer);
         }
         
         // Call the function to load boundaries
@@ -744,7 +824,12 @@
         
         document.getElementById('province-layer').addEventListener('change', (e) => {
             if (e.target.checked) {
-                map.addLayer(provinceLayer);
+                // If provinces haven't loaded successfully, try to load them
+                if (!loadedLayers.provinces) {
+                    loadProvinces();
+                } else {
+                    map.addLayer(provinceLayer);
+                }
             } else {
                 map.removeLayer(provinceLayer);
             }
@@ -850,6 +935,11 @@
         
         // Add attribution control
         map.attributionControl.setPrefix('Powered by <a href="https://leafletjs.com/">Leaflet</a>');
+        
+        // Make load functions globally available for retry functionality
+        window.loadProvinces = loadProvinces;
+        window.loadMunicipalities = loadMunicipalities;
+        window.loadBarangays = loadBarangays;
     </script>
 </body>
 </html>
