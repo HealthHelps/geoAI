@@ -498,7 +498,7 @@
             satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
             }),
-            terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            terrain: L.tileLayer('https://{s}.tile.openttopomap.org/{z}/{x}/{y}.png', {
                 attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>'
             }),
             dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -541,6 +541,10 @@
             // Add sample data for demonstration
             if (layerType === 'province') {
                 addSampleProvinces();
+            } else if (layerType === 'municipality') {
+                addSampleMunicipalities();
+            } else if (layerType === 'barangay') {
+                addSampleBarangays();
             }
         }
         
@@ -751,6 +755,15 @@
                         [15.8, 120.5],
                         [15.8, 119.8]
                     ]
+                },
+                {
+                    name: "Bulacan",
+                    coords: [
+                        [15.2, 120.8],
+                        [15.2, 121.3],
+                        [14.7, 121.3],
+                        [14.7, 120.8]
+                    ]
                 }
             ];
             
@@ -772,6 +785,94 @@
             }
             
             document.getElementById('province-status').textContent = 'Sample data';
+        }
+        
+        // Add sample municipalities for demonstration
+        function addSampleMunicipalities() {
+            // Sample municipalities (just for demonstration)
+            const municipalities = [
+                {
+                    name: "San Fernando",
+                    coords: [
+                        [16.65, 120.35],
+                        [16.65, 120.45],
+                        [16.55, 120.45],
+                        [16.55, 120.35]
+                    ]
+                },
+                {
+                    name: "Dagupan",
+                    coords: [
+                        [16.08, 120.38],
+                        [16.08, 120.42],
+                        [16.04, 120.42],
+                        [16.04, 120.38]
+                    ]
+                }
+            ];
+            
+            // Clear any existing layers
+            municipalityLayer.clearLayers();
+            
+            // Add sample municipalities
+            municipalities.forEach(municipality => {
+                L.polygon(municipality.coords, {
+                    color: '#ff4500',
+                    weight: 1,
+                    fillOpacity: 0.2
+                }).bindPopup(municipality.name + ' Municipality (Sample Data)').addTo(municipalityLayer);
+            });
+            
+            // If checkbox is checked, add to map
+            if (document.getElementById('municipality-layer').checked) {
+                map.addLayer(municipalityLayer);
+            }
+            
+            document.getElementById('municipality-status').textContent = 'Sample data';
+        }
+        
+        // Add sample barangays for demonstration
+        function addSampleBarangays() {
+            // Sample barangays (just for demonstration)
+            const barangays = [
+                {
+                    name: "Barangay 1",
+                    coords: [
+                        [16.62, 120.37],
+                        [16.62, 120.38],
+                        [16.61, 120.38],
+                        [16.61, 120.37]
+                    ]
+                },
+                {
+                    name: "Barangay 2",
+                    coords: [
+                        [16.06, 120.39],
+                        [16.06, 120.40],
+                        [16.05, 120.40],
+                        [16.05, 120.39]
+                    ]
+                }
+            ];
+            
+            // Clear any existing layers
+            barangayLayer.clearLayers();
+            
+            // Add sample barangays
+            barangays.forEach(barangay => {
+                L.polygon(barangay.coords, {
+                    color: '#ff6b6b',
+                    weight: 0.5,
+                    fillOpacity: 0.1
+                }).bindPopup(barangay.name + ' Barangay (Sample Data)').addTo(barangayLayer);
+            });
+            
+            // If checkbox is checked, add to map
+            if (document.getElementById('barangay-layer').checked) {
+                map.addLayer(barangayLayer);
+            }
+            
+            document.getElementById('barangay-status').textContent = 'Sample data';
         }
         
         // Add sample region (just for demonstration)
@@ -905,7 +1006,7 @@
         
         timelineSlider.addEventListener('input', () => {
             timelineYear.textContent = timelineSlider.value;
-            // In a real application, this would update the thematic maps
+            // In a real application, this would update the timeline animation
         });
         
         // Upload button
@@ -914,32 +1015,22 @@
             uploadPanel.style.display = uploadPanel.style.display === 'block' ? 'none' : 'block';
         });
         
-        // Map click event to show information
+        // Initialize the map click event to show info panel
         map.on('click', (e) => {
             const infoPanel = document.getElementById('info-panel');
             infoPanel.innerHTML = `
                 <h4>Location Information</h4>
-                <p><strong>Coordinates:</strong> ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}</p>
-                <p><strong>Zoom Level:</strong> ${map.getZoom()}</p>
-                <p>Click on a boundary for more details</p>
+                <p><strong>Latitude:</strong> ${e.latlng.lat.toFixed(4)}</p>
+                <p><strong>Longitude:</strong> ${e.latlng.lng.toFixed(4)}</p>
+                <p>Click on a boundary or facility for more information</p>
             `;
             infoPanel.style.display = 'block';
         });
         
-        // Add scale control
-        L.control.scale({
-            metric: true,
-            imperial: false,
-            position: 'bottomleft'
-        }).addTo(map);
-        
-        // Add attribution control
-        map.attributionControl.setPrefix('Powered by <a href="https://leafletjs.com/">Leaflet</a>');
-        
-        // Make load functions globally available for retry functionality
-        window.loadProvinces = loadProvinces;
-        window.loadMunicipalities = loadMunicipalities;
-        window.loadBarangays = loadBarangays;
+        // Close info panel when clicking on the map
+        map.on('popupopen', () => {
+            document.getElementById('info-panel').style.display = 'none';
+        });
     </script>
 </body>
 </html>
