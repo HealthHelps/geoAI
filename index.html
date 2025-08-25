@@ -8,9 +8,6 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
-    <!-- Leaflet Draw CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
-    
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     
@@ -254,6 +251,27 @@
             width: 250px;
             display: none;
         }
+        
+        .loading-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(139, 0, 0, 0.3);
+            border-radius: 50%;
+            border-top-color: #8b0000;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .layer-status {
+            font-size: 0.8rem;
+            color: #666;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -275,16 +293,19 @@
                         <label for="region-layer">Regions</label>
                     </div>
                     <div class="layer-control">
-                        <input type="checkbox" id="province-layer">
+                        <input type="checkbox" id="province-layer" checked>
                         <label for="province-layer">Provinces</label>
+                        <span id="province-status" class="layer-status">Loading...</span>
                     </div>
                     <div class="layer-control">
                         <input type="checkbox" id="municipality-layer">
                         <label for="municipality-layer">Municipalities</label>
+                        <span id="municipality-status" class="layer-status">Click to load</span>
                     </div>
                     <div class="layer-control">
                         <input type="checkbox" id="barangay-layer">
                         <label for="barangay-layer">Barangays</label>
+                        <span id="barangay-status" class="layer-status">Click to load</span>
                     </div>
                 </div>
             </div>
@@ -392,26 +413,22 @@
             </button>
             
             <div class="legend" id="legend">
-                <h4>Health Facility Types</h4>
+                <h4>Boundary Layers</h4>
                 <div class="legend-item">
-                    <div class="legend-color" style="background-color: #3366CC;"></div>
-                    <span>Regional Health Units</span>
+                    <div class="legend-color" style="background-color: #8b0000;"></div>
+                    <span>Regions</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background-color: #FF9933;"></div>
-                    <span>Provincial Health Units</span>
+                    <div class="legend-color" style="background-color: #cc0000;"></div>
+                    <span>Provinces</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background-color: #109618;"></div>
-                    <span>Rural Health Units</span>
+                    <div class="legend-color" style="background-color: #ff4500;"></div>
+                    <span>Municipalities</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background-color: #990099;"></div>
-                    <span>Barangay Health Centers</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background-color: #DC3912;"></div>
-                    <span>Lying-In Clinics</span>
+                    <div class="legend-color" style="background-color: #ff6b6b;"></div>
+                    <span>Barangays</span>
                 </div>
             </div>
             
@@ -449,14 +466,8 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- Leaflet Draw JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-    
-    <!-- Heatmap plugin -->
-    <script src="https://cdn.jsdelivr.net/gh/pa7/heatmap.js@master/build/heatmap.min.js"></script>
-    
-    <!-- Leaflet Heatmap plugin -->
-    <script src="https://cdn.jsdelivr.net/gh/pa7/heatmap.js@master/plugins/leaflet-heatmap/leaflet-heatmap.js"></script>
+    <!-- Shapefile.js for reading zipped shapefiles -->
+    <script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
     
     <script>
         // Initialize the map
@@ -498,23 +509,193 @@
         const municipalityLayer = L.layerGroup();
         const barangayLayer = L.layerGroup();
         
-        // Add layer groups for health facilities
-        const rhuLayer = L.layerGroup();
-        const phuLayer = L.layerGroup();
-        const ruralHuLayer = L.layerGroup();
-        const bhcLayer = L.layerGroup();
-        const lyingInLayer = L.layerGroup();
+        // Store loaded layers for toggle functionality
+        const loadedLayers = {
+            provinces: null,
+            municipalities: null,
+            barangays: null
+        };
         
-        // Add layer groups for thematic maps
-        const maternalHeatmap = L.layerGroup();
-        const hivHeatmap = L.layerGroup();
-        const facilityHeatmap = L.layerGroup();
-        const povertyMnchHeatmap = L.layerGroup();
-        const povertyHivHeatmap = L.layerGroup();
+        // Load province boundaries from GitHub
+        function loadProvinces() {
+            const statusElement = document.getElementById('province-status');
+            statusElement.innerHTML = '<div class="loading-indicator"></div>';
+            
+            // Load the zipped shapefile from GitHub
+            shp('https://healthhelps.github.io/geoAI/Provinces.zip').then(function(data) {
+                // Style function for provinces
+                function provinceStyle(feature) {
+                    return {
+                        fillColor: '#cc0000',
+                        weight: 2,
+                        opacity: 1,
+                        color: '#8b0000',
+                        dashArray: '3',
+                        fillOpacity: 0.3
+                    };
+                }
+                
+                // Create GeoJSON layer with styling
+                const geoJsonLayer = L.geoJson(data, {
+                    style: provinceStyle,
+                    onEachFeature: function(feature, layer) {
+                        if (feature.properties) {
+                            let popupContent = '<div class="popup-content">';
+                            for (const property in feature.properties) {
+                                popupContent += `<strong>${property}:</strong> ${feature.properties[property]}<br>`;
+                            }
+                            popupContent += '</div>';
+                            layer.bindPopup(popupContent);
+                        }
+                    }
+                });
+                
+                // Add to province layer
+                geoJsonLayer.addTo(provinceLayer);
+                loadedLayers.provinces = geoJsonLayer;
+                
+                // Update status
+                statusElement.textContent = 'Loaded';
+                
+                // If checkbox is checked, add to map
+                if (document.getElementById('province-layer').checked) {
+                    map.addLayer(provinceLayer);
+                }
+            }).catch(function(error) {
+                console.error('Error loading provinces:', error);
+                statusElement.textContent = 'Error loading';
+                
+                // Add sample province data for demonstration if the real data fails to load
+                addSampleProvinces();
+            });
+        }
         
-        // Add sample boundaries (in a real application, these would be loaded from GeoJSON files)
-        function addSampleBoundaries() {
-            // Sample region (just for demonstration)
+        // Load municipality boundaries from GitHub
+        function loadMunicipalities() {
+            const statusElement = document.getElementById('municipality-status');
+            statusElement.innerHTML = '<div class="loading-indicator"></div>';
+            
+            // Load the zipped shapefile from GitHub
+            shp('https://healthhelps.github.io/geoAI/Towns.zip').then(function(data) {
+                // Style function for municipalities
+                function municipalityStyle(feature) {
+                    return {
+                        fillColor: '#ff4500',
+                        weight: 1,
+                        opacity: 0.7,
+                        color: '#cc0000',
+                        dashArray: '2',
+                        fillOpacity: 0.2
+                    };
+                }
+                
+                // Create GeoJSON layer with styling
+                const geoJsonLayer = L.geoJson(data, {
+                    style: municipalityStyle,
+                    onEachFeature: function(feature, layer) {
+                        if (feature.properties) {
+                            let popupContent = '<div class="popup-content">';
+                            for (const property in feature.properties) {
+                                popupContent += `<strong>${property}:</strong> ${feature.properties[property]}<br>`;
+                            }
+                            popupContent += '</div>';
+                            layer.bindPopup(popupContent);
+                        }
+                    }
+                });
+                
+                // Add to municipality layer
+                geoJsonLayer.addTo(municipalityLayer);
+                loadedLayers.municipalities = geoJsonLayer;
+                
+                // Update status
+                statusElement.textContent = 'Loaded';
+                
+                // If checkbox is checked, add to map
+                if (document.getElementById('municipality-layer').checked) {
+                    map.addLayer(municipalityLayer);
+                }
+            }).catch(function(error) {
+                console.error('Error loading municipalities:', error);
+                statusElement.textContent = 'Error loading';
+            });
+        }
+        
+        // Load barangay boundaries from GitHub
+        function loadBarangays() {
+            const statusElement = document.getElementById('barangay-status');
+            statusElement.innerHTML = '<div class="loading-indicator"></div>';
+            
+            // Load the zipped shapefile from GitHub
+            shp('https://healthhelps.github.io/geoAI/Barangay.zip').then(function(data) {
+                // Style function for barangays
+                function barangayStyle(feature) {
+                    return {
+                        fillColor: '#ff6b6b',
+                        weight: 0.5,
+                        opacity: 0.5,
+                        color: '#ff4500',
+                        dashArray: '1',
+                        fillOpacity: 0.1
+                    };
+                }
+                
+                // Create GeoJSON layer with styling
+                const geoJsonLayer = L.geoJson(data, {
+                    style: barangayStyle,
+                    onEachFeature: function(feature, layer) {
+                        if (feature.properties) {
+                            let popupContent = '<div class="popup-content">';
+                            for (const property in feature.properties) {
+                                popupContent += `<strong>${property}:</strong> ${feature.properties[property]}<br>`;
+                            }
+                            popupContent += '</div>';
+                            layer.bindPopup(popupContent);
+                        }
+                    }
+                });
+                
+                // Add to barangay layer
+                geoJsonLayer.addTo(barangayLayer);
+                loadedLayers.barangays = geoJsonLayer;
+                
+                // Update status
+                statusElement.textContent = 'Loaded';
+                
+                // If checkbox is checked, add to map
+                if (document.getElementById('barangay-layer').checked) {
+                    map.addLayer(barangayLayer);
+                }
+            }).catch(function(error) {
+                console.error('Error loading barangays:', error);
+                statusElement.textContent = 'Error loading';
+            });
+        }
+        
+        // Add sample provinces for demonstration if the real data fails to load
+        function addSampleProvinces() {
+            // Sample province (just for demonstration)
+            const province = L.polygon([
+                [17.5, 120.2],
+                [17.5, 120.8],
+                [16.8, 120.8],
+                [16.8, 120.2]
+            ], {
+                color: '#cc0000',
+                weight: 2,
+                fillOpacity: 0.3
+            }).bindPopup('La Union Province').addTo(provinceLayer);
+            
+            // If checkbox is checked, add to map
+            if (document.getElementById('province-layer').checked) {
+                map.addLayer(provinceLayer);
+            }
+            
+            document.getElementById('province-status').textContent = 'Sample data';
+        }
+        
+        // Add sample region (just for demonstration)
+        function addSampleRegion() {
             const region = L.polygon([
                 [18.5, 120],
                 [18.5, 122],
@@ -525,54 +706,18 @@
                 weight: 2,
                 fillOpacity: 0.1
             }).bindPopup('Ilocos Region').addTo(regionLayer);
-            
-            // Sample province
-            const province = L.polygon([
-                [17.5, 120.2],
-                [17.5, 120.8],
-                [16.8, 120.8],
-                [16.8, 120.2]
-            ], {
-                color: '#cc0000',
-                weight: 1.5,
-                fillOpacity: 0.1
-            }).bindPopup('La Union Province').addTo(provinceLayer);
-            
-            // Sample health facilities (in a real app, these would be loaded from actual data)
-            const rhu = L.circleMarker([17.2, 120.5], {
-                radius: 8,
-                color: '#3366CC',
-                fillColor: '#3366CC',
-                fillOpacity: 0.8
-            }).bindPopup('Regional Health Unit: Ilocos RHU<br>Services: MNCH, FP, HIV/AIDS').addTo(rhuLayer);
-            
-            const phu = L.circleMarker([17.0, 120.4], {
-                radius: 8,
-                color: '#FF9933',
-                fillColor: '#FF9933',
-                fillOpacity: 0.8
-            }).bindPopup('Provincial Health Unit: La Union PHU<br>Services: MNCH, FP').addTo(phuLayer);
         }
         
-        // Call the function to add sample data
-        addSampleBoundaries();
+        // Call the function to load boundaries
+        loadProvinces();
+        addSampleRegion();
         
         // Set up layer control
         const overlayMaps = {
             "Regions": regionLayer,
             "Provinces": provinceLayer,
             "Municipalities": municipalityLayer,
-            "Barangays": barangayLayer,
-            "Regional Health Units": rhuLayer,
-            "Provincial Health Units": phuLayer,
-            "Rural Health Units": ruralHuLayer,
-            "Barangay Health Centers": bhcLayer,
-            "Lying-In Clinics": lyingInLayer,
-            "Maternal & Child Death Rate": maternalHeatmap,
-            "HIV/AIDS Death Rate": hivHeatmap,
-            "Health Facility Coverage": facilityHeatmap,
-            "Poverty & MNCH Intersection": povertyMnchHeatmap,
-            "Poverty & HIV Intersection": povertyHivHeatmap
+            "Barangays": barangayLayer
         };
         
         L.control.layers(basemaps, overlayMaps, {
@@ -602,6 +747,32 @@
                 map.addLayer(provinceLayer);
             } else {
                 map.removeLayer(provinceLayer);
+            }
+        });
+        
+        document.getElementById('municipality-layer').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                // Load municipalities if not already loaded
+                if (!loadedLayers.municipalities) {
+                    loadMunicipalities();
+                } else {
+                    map.addLayer(municipalityLayer);
+                }
+            } else {
+                map.removeLayer(municipalityLayer);
+            }
+        });
+        
+        document.getElementById('barangay-layer').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                // Load barangays if not already loaded
+                if (!loadedLayers.barangays) {
+                    loadBarangays();
+                } else {
+                    map.addLayer(barangayLayer);
+                }
+            } else {
+                map.removeLayer(barangayLayer);
             }
         });
         
@@ -665,46 +836,10 @@
                 <h4>Location Information</h4>
                 <p><strong>Coordinates:</strong> ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}</p>
                 <p><strong>Zoom Level:</strong> ${map.getZoom()}</p>
-                <p>Click on a feature for more details</p>
+                <p>Click on a boundary for more details</p>
             `;
             infoPanel.style.display = 'block';
         });
-        
-        // Initialize the map with some sample heatmap data (in a real app, this would come from actual data)
-        function initHeatmap() {
-            // This is just sample data - in a real application, you would use actual data
-            const points = [];
-            for (let i = 0; i < 100; i++) {
-                points.push({
-                    lat: 12 + Math.random() * 4,
-                    lng: 120 + Math.random() * 4,
-                    value: Math.random()
-                });
-            }
-            
-            // Create a heatmap layer (this is a simplified version)
-            const heatmapLayer = L.layerGroup().addTo(maternalHeatmap);
-            
-            points.forEach(point => {
-                L.circleMarker([point.lat, point.lng], {
-                    radius: 10,
-                    color: 'rgba(139, 0, 0, 0)',
-                    fillColor: getColorFromValue(point.value),
-                    fillOpacity: 0.6
-                }).addTo(heatmapLayer);
-            });
-        }
-        
-        // Helper function to get color based on value
-        function getColorFromValue(value) {
-            // Red to green gradient
-            const r = Math.floor(255 * value);
-            const g = Math.floor(255 * (1 - value));
-            return `rgb(${r}, ${g}, 0)`;
-        }
-        
-        // Initialize heatmap
-        initHeatmap();
         
         // Add scale control
         L.control.scale({
