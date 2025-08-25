@@ -222,7 +222,7 @@
             position: absolute;
             bottom: 20px;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%); 
             z-index: 800;
             width: 60%;
             min-width: 300px;
@@ -278,12 +278,36 @@
             font-size: 0.8rem;
             margin-top: 5px;
         }
+        
+        .warning-message {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background-color: #e9ecef;
+            border-radius: 3px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background-color: #8b0000;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
     </style>
 </head>
 <body>
     <div id="header">
-        <img src="https://github.com/HealthHelps/geoAI/blob/main/HealthHelpLogo.png" alt="HealthHelp Logo" id="logo">
-        <h1 id="title">HealthHelp GeoAI - Philippines Health Mapping</h1>
+        <img src="https://github.com/HealthHelps/geoAI/blob/main/HealthHelpLogo.png" alt="Logo" id="logo">
+        <h1 id="title">HealthHelp GeoAI</h1>
     </div>
     
     <div id="main-container">
@@ -312,6 +336,12 @@
                         <input type="checkbox" id="barangay-layer">
                         <label for="barangay-layer">Barangays</label>
                         <span id="barangay-status" class="layer-status">Click to load</span>
+                    </div>
+                    <div class="warning-message" id="barangay-warning" style="display: none;">
+                        <i class="fas fa-exclamation-triangle"></i> Barangays data is large and may take time to load.
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" id="barangay-progress"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -685,24 +715,31 @@
                 });
         }
         
-        // Load barangay boundaries from GitHub
+        // Load barangay boundaries from GitHub with better error handling
         function loadBarangays() {
             const statusElement = document.getElementById('barangay-status');
+            const warningElement = document.getElementById('barangay-warning');
+            const progressElement = document.getElementById('barangay-progress');
+            
             // Clear any previous error messages
             const errorMessages = statusElement.parentNode.querySelectorAll('.error-message');
             errorMessages.forEach(msg => msg.remove());
             
             statusElement.innerHTML = '<div class="loading-indicator"></div>';
+            warningElement.style.display = 'block';
+            progressElement.style.width = '10%';
             
             // Load the GeoJSON file from GitHub
             fetch('https://raw.githubusercontent.com/HealthHelps/geoAI/main/Barangays.geojson')
                 .then(response => {
+                    progressElement.style.width = '30%';
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(data => {
+                    progressElement.style.width = '60%';
                     // Check if data was loaded correctly
                     if (!data || !data.features || data.features.length === 0) {
                         throw new Error('No features found in the GeoJSON');
@@ -735,6 +772,8 @@
                         }
                     });
                     
+                    progressElement.style.width = '90%';
+                    
                     // Clear any existing layers
                     barangayLayer.clearLayers();
                     
@@ -744,6 +783,12 @@
                     
                     // Update status
                     statusElement.textContent = 'Loaded';
+                    progressElement.style.width = '100%';
+                    
+                    // Hide warning after a short delay
+                    setTimeout(() => {
+                        warningElement.style.display = 'none';
+                    }, 2000);
                     
                     // If checkbox is checked, add to map
                     if (document.getElementById('barangay-layer').checked) {
@@ -752,6 +797,7 @@
                 })
                 .catch(function(error) {
                     handleGeoJSONError(error, 'barangay');
+                    warningElement.style.display = 'none';
                 });
         }
         
@@ -983,124 +1029,102 @@
             }
         });
         
-        // Sidebar toggle
+        // Sidebar toggle functionality
         document.getElementById('sidebar-toggle').addEventListener('click', () => {
             const sidebar = document.getElementById('sidebar');
             const toggleBtn = document.getElementById('sidebar-toggle');
             
             if (sidebar.style.transform === 'translateX(-350px)') {
                 sidebar.style.transform = 'translateX(0)';
-                toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
                 toggleBtn.style.left = '350px';
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
             } else {
                 sidebar.style.transform = 'translateX(-350px)';
-                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
                 toggleBtn.style.left = '0';
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
             }
         });
         
-        // Basemap selector
+        // Basemap selector functionality
         document.getElementById('basemap-select').addEventListener('change', (e) => {
-            const selectedBasemap = e.target.value;
-            
             // Remove all basemaps
-            for (const key in basemaps) {
-                map.removeLayer(basemaps[key]);
-            }
+            Object.values(basemaps).forEach(layer => {
+                map.removeLayer(layer);
+            });
             
             // Add the selected basemap
-            basemaps[selectedBasemap].addTo(map);
+            basemaps[e.target.value].addTo(map);
         });
         
-        // Year slider
-        const yearSlider = document.getElementById('year-slider');
-        const yearValue = document.getElementById('year-value');
-        
-        yearSlider.addEventListener('input', () => {
-            yearValue.textContent = yearSlider.value;
-            // In a real application, this would update the data shown on the map
-        });
-        
-        // Timeline slider
-        const timelineSlider = document.getElementById('timeline-slider');
-        const timelineYear = document.getElementById('timeline-year');
-        
-        timelineSlider.addEventListener('input', () => {
-            timelineYear.textContent = timelineSlider.value;
-            // In a real application, this would update the timeline animation
-        });
-        
-        // Upload button
+        // Upload button functionality
         document.getElementById('upload-btn').addEventListener('click', () => {
             const uploadPanel = document.getElementById('upload-panel');
-            uploadPanel.style.display = uploadPanel.style.display === 'block' ? 'none' : 'block';
+            if (uploadPanel.style.display === 'block') {
+                uploadPanel.style.display = 'none';
+            } else {
+                uploadPanel.style.display = 'block';
+            }
         });
         
-        // Process upload button
-        document.getElementById('process-upload').addEventListener('click', () => {
-            alert('Data processing functionality would be implemented here.');
-            document.getElementById('upload-panel').style.display = 'none';
+        // Close upload panel when clicking outside
+        document.addEventListener('click', (e) => {
+            const uploadPanel = document.getElementById('upload-panel');
+            const uploadBtn = document.getElementById('upload-btn');
+            
+            if (uploadPanel.style.display === 'block' && 
+                !uploadPanel.contains(e.target) && 
+                e.target !== uploadBtn) {
+                uploadPanel.style.display = 'none';
+            }
         });
         
-        // Export button
-        document.getElementById('export-btn').addEventListener('click', () => {
-            alert('Export functionality would be implemented here.');
+        // Slider functionality
+        document.getElementById('year-slider').addEventListener('input', (e) => {
+            document.getElementById('year-value').textContent = e.target.value;
         });
         
-        // Analyze button
-        document.getElementById('analyze-btn').addEventListener('click', () => {
-            alert('Data analysis functionality would be implemented here.');
+        document.getElementById('timeline-slider').addEventListener('input', (e) => {
+            document.getElementById('timeline-year').textContent = e.target.value;
         });
         
-        // Predict button
-        document.getElementById('predict-btn').addEventListener('click', () => {
-            alert('Prediction functionality would be implemented here.');
+        document.getElementById('opacity-slider').addEventListener('input', (e) => {
+            document.getElementById('opacity-value').textContent = e.target.value;
+            
+            // Update layer opacities
+            if (loadedLayers.provinces) {
+                loadedLayers.provinces.setStyle({
+                    fillOpacity: e.target.value / 100 * 0.3
+                });
+            }
+            
+            if (loadedLayers.municipalities) {
+                loadedLayers.municipalities.setStyle({
+                    fillOpacity: e.target.value / 100 * 0.2
+                });
+            }
+            
+            if (loadedLayers.barangays) {
+                loadedLayers.barangays.setStyle({
+                    fillOpacity: e.target.value / 100 * 0.1
+                });
+            }
         });
         
-        // Heatmap buttons
-        document.getElementById('maternal-heatmap-btn').addEventListener('click', () => {
-            alert('Maternal & Child Death Rate heatmap would be shown here.');
-        });
-        
-        document.getElementById('hiv-heatmap-btn').addEventListener('click', () => {
-            alert('HIV/AIDS Death Rate heatmap would be shown here.');
-        });
-        
-        document.getElementById('facility-heatmap-btn').addEventListener('click', () => {
-            alert('Health Facility Coverage heatmap would be shown here.');
-        });
-        
-        document.getElementById('poverty-mnch-btn').addEventListener('click', () => {
-            alert('Poverty & MNCH Intersection analysis would be shown here.');
-        });
-        
-        document.getElementById('poverty-hiv-btn').addEventListener('click', () => {
-            alert('Poverty & HIV Intersection analysis would be shown here.');
-        });
-        
-        // Opacity slider
-        const opacitySlider = document.getElementById('opacity-slider');
-        const opacityValue = document.getElementById('opacity-value');
-        
-        opacitySlider.addEventListener('input', () => {
-            opacityValue.textContent = opacitySlider.value;
-            // In a real application, this would update the opacity of the thematic layers
-        });
-        
-        // Click event for map info
+        // Add click event to show info panel
         map.on('click', (e) => {
             const infoPanel = document.getElementById('info-panel');
             infoPanel.innerHTML = `
                 <h4>Location Information</h4>
                 <p><strong>Latitude:</strong> ${e.latlng.lat.toFixed(4)}</p>
                 <p><strong>Longitude:</strong> ${e.latlng.lng.toFixed(4)}</p>
-                <p>Click on a boundary to get more information</p>
             `;
             infoPanel.style.display = 'block';
         });
         
-        // Initialize the info panel
-        document.getElementById('info-panel').style.display = 'block';
+        // Close info panel when clicking on the map
+        map.on('popupopen', () => {
+            document.getElementById('info-panel').style.display = 'none';
+        });
     </script>
 </body>
 </html>
