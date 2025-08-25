@@ -146,33 +146,45 @@
       background: var(--glass-light);
       color: var(--accent);
     }
-    /* Upload Panel */
+    /* Upload Panel - bottom middle, horizontal */
     #upload-panel {
       position: fixed;
-      top: calc(var(--header-height) + 206px);
-      right: var(--sidebar-width);
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
       z-index: 25;
       background: var(--glass-light);
-      padding: 18px 18px 10px 50px;
-      border-radius: 14px;
+      padding: 12px 16px 10px 16px;
+      border-radius: 20px;
       box-shadow: 0 2px 18px #98000066;
-      min-width: 240px;
-      max-width: 340px;
+      min-width: 320px;
+      max-width: 96vw;
       display: flex;
-      flex-direction: column;
-      gap: 11px;
+      flex-direction: row;
+      align-items: flex-end;
+      gap: 20px;
       transition: right var(--transition), background .4s;
       backdrop-filter: blur(7px);
     }
-    #sidebar.collapsed + #upload-panel {
-      right: var(--sidebar-width-collapsed);
+    #upload-panel .upload-section {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      min-width: 140px;
+      background: none;
     }
     #upload-panel .section-title {
-      font-size: 1.06em;
-      margin-bottom: 7px;
+      font-size: 1.08em;
+      margin-bottom: 2px;
+      font-weight: bold;
+      border-bottom: 1px solid var(--accent);
+      padding-bottom: 2px;
+      color: var(--accent);
+      letter-spacing: 0.8px;
+      text-align: left;
     }
     .upload-group label {
-      font-size: 0.97em;
+      font-size: 0.95em;
       margin-bottom: 2px;
       display: block;
       color: #fff;
@@ -186,7 +198,7 @@
       border: 1px solid #e43a3a55;
       border-radius: 7px;
       padding: 2px 0;
-      font-size: 0.99em;
+      font-size: 0.98em;
     }
     #save-data-btn, #clear-map-btn {
       margin-bottom: 5px;
@@ -195,7 +207,7 @@
       border: none;
       border-radius: 8px;
       padding: 7px 12px;
-      font-size: 0.98em;
+      font-size: 0.97em;
       font-weight: bold;
       cursor: pointer;
       box-shadow: 0 2px 10px #e43a3a22;
@@ -208,8 +220,10 @@
     #upload-panel small {
       color: #fae;
       font-size: 0.93em;
+      margin-top: 6px;
+      text-align: left;
+      display: block;
     }
-
     /* Layer controls */
     #layer-controls {
       display: flex;
@@ -235,7 +249,6 @@
       width: 18px;
       height: 18px;
     }
-
     /* Storyboard controls */
     #storyboard-controls {
       margin-bottom: 13px;
@@ -273,31 +286,95 @@
       max-width: calc(var(--sidebar-width) - 60px);
       min-width: 160px;
     }
-
-    /* Basemaps */
-    #basemap-controls {
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-      margin-bottom: 10px;
-    }
-    .basemap-btn {
+    /* Basemaps floating */
+    #basemap-panel {
+      position: fixed;
+      left: 50%;
+      top: 80px;
+      transform: translateX(-50%);
+      z-index: 22;
       background: var(--glass-dark);
       color: #fff;
-      border: none;
-      border-radius: 9px;
-      padding: 6px 13px;
-      font-size: 0.96em;
+      border-radius: 18px;
+      box-shadow: 0 2px 14px #98000066;
+      padding: 7px 14px;
+      min-width: 44px;
+      max-width: 98vw;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      transition: max-height .3s, background .22s;
       cursor: pointer;
-      box-shadow: 0 2px 10px #98000022;
+      user-select: none;
+    }
+    #basemap-panel.collapsed {
+      max-height: 44px;
+      overflow: hidden;
+      padding: 7px 14px;
+      width: 44px;
+      min-width: 44px;
+      border-radius: 18px;
+      background: var(--accent);
+      align-items: center;
+      justify-content: center;
+    }
+    #basemap-panel .basemap-toggle-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.6em;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 0;
+      margin-top: 0;
+      padding: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px #e43a3a33;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .18s;
+    }
+    #basemap-panel .basemap-toggle-btn:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+    #basemap-panel .basemap-controls {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 2px;
+      margin-bottom: 2px;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+    }
+    .bm-cb {
+      display: flex;
+      align-items: center;
+      background: var(--glass-light);
+      border-radius: 8px;
+      padding: 4px 9px;
+      color: #fff;
+      font-size: 0.97em;
+      cursor: pointer;
+      border: 1px solid #e43a3a44;
+      min-width: 70px;
       font-family: inherit;
-      transition: background .17s;
+      transition: background .13s;
+    }
+    .bm-cb input[type="checkbox"] {
+      accent-color: var(--accent);
       margin-right: 5px;
     }
-    .basemap-btn.selected, .basemap-btn:hover {
+    .bm-cb.selected {
       background: var(--accent);
+      color: #fff;
     }
-
     /* Attribute popup */
     .attribute-popup {
       min-width: 220px;
@@ -314,15 +391,17 @@
       background: #C81E1E;
       color: #fff;
     }
-
-    /* Responsiveness */
     @media (max-width: 900px) {
       #sidebar {
         max-width: 98vw;
         min-width: 40vw;
       }
       #upload-panel {
-        right: 2vw;
+        left: 50vw;
+        max-width: 97vw;
+      }
+      #basemap-panel {
+        left: 50vw;
         max-width: 97vw;
       }
     }
@@ -334,14 +413,15 @@
       #upload-panel {
         padding: 8px 8px 8px 8px;
         font-size: .93em;
+        gap:10px;
       }
       #header {
         padding: 0 7px;
       }
       #logo { height: 28px;}
       #title { font-size: 1.17rem;}
+      #basemap-panel .bm-cb { min-width: 54px; font-size:.93em;}
     }
-
     /* Animations */
     .fade-in {
       animation: fadein .7s ease;
@@ -381,33 +461,42 @@
           <option value="poverty-hiv">High Poverty+Population+HIV/AIDS-related Death Rate</option>
         </select>
       </div>
-      <div class="section-title">Basemap</div>
-      <div id="basemap-controls"></div>
     </div>
   </div>
 
-  <!-- Upload/Analyze Panel (floating, always over map) -->
+  <!-- Upload/Analyze Panel (floating, always over map, bottom-middle, horizontal) -->
   <div id="upload-panel" class="fade-in">
-    <div class="section-title">Upload / Analyze</div>
-    <form id="upload-form" autocomplete="off">
+    <div class="upload-section">
+      <div class="section-title">Upload Shapefile (.zip)</div>
       <div class="upload-group">
-        <label for="upload-shapefile">Upload Shapefile (.zip):</label>
         <input type="file" id="upload-shapefile" accept=".zip">
       </div>
+    </div>
+    <div class="upload-section">
+      <div class="section-title">Upload GeoJSON</div>
       <div class="upload-group">
-        <label for="upload-geojson">Upload GeoJSON:</label>
         <input type="file" id="upload-geojson" accept=".geojson,application/json">
       </div>
+    </div>
+    <div class="upload-section">
+      <div class="section-title">Upload Other Geospatial Files</div>
       <div class="upload-group">
-        <label for="upload-other">Upload Other Geospatial Files:</label>
         <input type="file" id="upload-other" accept=".kml,.gpx,.csv">
       </div>
+    </div>
+    <div class="upload-section">
       <div style="display:flex;gap:5px;">
-        <button type="button" id="save-data-btn">Save Data Locally</button>
+        <button type="button" id="save-data-btn">Save Locally</button>
         <button type="button" id="clear-map-btn">Clear Map</button>
       </div>
-    </form>
-    <small>Uploaded data stays until you clear the map.<br>Click anywhere on the map to show attributes.</small>
+      <small>Uploaded data stays until you clear the map.<br>Click anywhere on the map to show attributes.</small>
+    </div>
+  </div>
+
+  <!-- Basemap Panel (floating, collapsed by default, top-middle)-->
+  <div id="basemap-panel" class="collapsed">
+    <button id="basemap-toggle-btn" class="basemap-toggle-btn" title="Show/Hide Basemaps">&#127760;</button>
+    <div class="basemap-controls" style="display:none;"></div>
   </div>
 
   <!-- Leaflet JS -->
@@ -436,7 +525,7 @@
       preferCanvas: true
     });
 
-    // Basemap Layers
+    // Basemap Layers (multi-select)
     const basemaps = {
       "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {id:'osm', attribution:'&copy; OpenStreetMap contributors'}),
       "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {id:'satellite', attribution:'&copy; ESRI, Maxar'}),
@@ -450,26 +539,43 @@
     };
     basemaps["OpenStreetMap"].addTo(map);
 
-    // Basemap Controls
-    const basemapControlDiv = document.getElementById("basemap-controls");
+    // Basemap Controls Panel (floating)
+    const basemapPanel = document.getElementById("basemap-panel");
+    const basemapControlsDiv = basemapPanel.querySelector(".basemap-controls");
+    document.getElementById("basemap-toggle-btn").onclick = function() {
+      basemapPanel.classList.toggle("collapsed");
+      if (basemapPanel.classList.contains("collapsed")) {
+        basemapControlsDiv.style.display = "none";
+      } else {
+        basemapControlsDiv.style.display = "flex";
+      }
+    };
+    // Multi-select checkboxes for basemaps
     Object.keys(basemaps).forEach((bm, i) => {
-      const btn = document.createElement("button");
-      btn.innerText = bm;
-      btn.className = "basemap-btn" + (i===0 ? " selected" : "");
-      btn.onclick = () => {
-        Object.values(basemaps).forEach(l => map.removeLayer(l));
-        basemapControlDiv.querySelectorAll(".basemap-btn").forEach(b => b.classList.remove("selected"));
-        btn.classList.add("selected");
-        basemaps[bm].addTo(map);
+      const wrap = document.createElement("div");
+      wrap.className = "bm-cb";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.id = `bm-${bm.replace(/\s/g,'')}`;
+      cb.checked = (bm === "OpenStreetMap");
+      wrap.classList.toggle("selected", cb.checked);
+      cb.onchange = () => {
+        if (cb.checked) {
+          basemaps[bm].addTo(map);
+        } else {
+          map.removeLayer(basemaps[bm]);
+        }
+        wrap.classList.toggle("selected", cb.checked);
       };
-      basemapControlDiv.appendChild(btn);
+      wrap.appendChild(cb);
+      wrap.appendChild(document.createTextNode(bm));
+      basemapControlsDiv.appendChild(wrap);
     });
 
     // Responsive sidebar width for storyboard dropdown
     function adjustSidebarWidth() {
       const sidebar = document.getElementById('sidebar');
       if (!sidebar.classList.contains('collapsed')) {
-        // Find longest option
         let select = document.getElementById('story-layer-select');
         let longest = Array.from(select.options).reduce((a, o) => o.text.length > a ? o.text.length : a, 0);
         let width = Math.max(330, longest * 10 + 120);
@@ -484,7 +590,6 @@
 
     // Sidebar expand/collapse
     const sidebar = document.getElementById('sidebar');
-    const uploadPanel = document.getElementById('upload-panel');
     document.getElementById('sidebar-toggle-btn').onclick = function () {
       sidebar.classList.toggle('collapsed');
       adjustSidebarWidth();
@@ -530,9 +635,10 @@
           shp(blob).then(geojson => {
             boundaryLayers[name] = L.geoJson(geojson, {
               style: styleBoundary(color),
-              onEachFeature: onEachFeature
+              onEachFeature: onEachFeature,
+              pmIgnore: false
             });
-            // Add layer toggle control
+            boundaryLayers[name].addTo(map); // Show by default
             updateLayerControls();
           });
         });
@@ -547,7 +653,7 @@
         const check = document.createElement("input");
         check.type = "checkbox";
         check.id = `layer-${level.replace(/\s/g,'')}`;
-        check.checked = false;
+        check.checked = map.hasLayer(boundaryLayers[level]);
         check.onchange = (e) => {
           if (e.target.checked) map.addLayer(boundaryLayers[level]);
           else map.removeLayer(boundaryLayers[level]);
@@ -558,9 +664,16 @@
         wrap.appendChild(check);
         wrap.appendChild(lbl);
         layerDiv.appendChild(wrap);
+
+        // Enable hover highlight
+        wrap.onmouseenter = () => {
+          boundaryLayers[level].setStyle({color:'#e43a3a', weight:4});
+        };
+        wrap.onmouseleave = () => {
+          boundaryLayers[level].setStyle(styleBoundary(boundarySources.find(b=>b.name==level).color));
+        };
       });
     }
-    setTimeout(updateLayerControls, 2000);
 
     // Thematic Layer Data (demo only; replace with real)
     let thematicData = {
@@ -585,7 +698,8 @@
                   else fill = `rgba(130,0,0,${0.4+val*0.5})`;
                   return {fillColor: fill, color: "#980000", weight: 1, fillOpacity: 0.45+val*0.35};
                 },
-                onEachFeature: onEachFeature
+                onEachFeature: onEachFeature,
+                pmIgnore: false
               });
             }
           }
@@ -649,7 +763,8 @@
         shp(file).then(function(geojson){
           const lyr = L.geoJson(geojson, {
             style: {color: "#ad1d1d", fillColor: "#d45e5e", fillOpacity: 0.45},
-            onEachFeature: onEachFeature
+            onEachFeature: onEachFeature,
+            pmIgnore: false
           });
           lyr.addTo(map);
           uploadedLayers.push(lyr);
@@ -661,7 +776,8 @@
           const geojson = JSON.parse(e.target.result);
           const lyr = L.geoJson(geojson, {
             style: {color: "#ad1d1d", fillColor: "#d45e5e", fillOpacity: 0.45},
-            onEachFeature: onEachFeature
+            onEachFeature: onEachFeature,
+            pmIgnore: false
           });
           lyr.addTo(map);
           uploadedLayers.push(lyr);
@@ -696,7 +812,8 @@
           if (geojson) {
             const lyr = L.geoJson(geojson, {
               style: {color: "#ad1d1d", fillColor: "#d45e5e", fillOpacity: 0.45},
-              onEachFeature: onEachFeature
+              onEachFeature: onEachFeature,
+              pmIgnore: false
             });
             lyr.addTo(map);
             uploadedLayers.push(lyr);
@@ -767,6 +884,10 @@
         }
         html += '</div>';
         layer.bindPopup(html).openPopup();
+      });
+      // Enable editing by clicking the edit button in pm toolbar
+      layer.on('pm:edit', function(e) {
+        geoAI.visualize(layer.toGeoJSON());
       });
     }
     map.on('click', function(e){
