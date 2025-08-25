@@ -472,9 +472,6 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- Shapefile.js for reading zipped shapefiles -->
-    <script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
-    
     <script>
         // Initialize the map
         const map = L.map('map', {
@@ -499,7 +496,7 @@
                 attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
             }),
             terrain: L.tileLayer('https://{s}.tile.openttopomap.org/{z}/{x}/{y}.png', {
-                attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>'
+                attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://openttopomap.org">OpenTopoMap</a>'
             }),
             dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -522,8 +519,8 @@
             barangays: null
         };
         
-        // Function to handle shapefile loading errors
-        function handleShapefileError(error, layerType) {
+        // Function to handle GeoJSON loading errors
+        function handleGeoJSONError(error, layerType) {
             console.error(`Error loading ${layerType}:`, error);
             const statusElement = document.getElementById(`${layerType}-status`);
             statusElement.textContent = 'Error loading';
@@ -557,57 +554,65 @@
             
             statusElement.innerHTML = '<div class="loading-indicator"></div>';
             
-            // Load the zipped shapefile from GitHub
-            shp('https://healthhelps.github.io/geoAI/Provinces.zip').then(function(data) {
-                // Check if data was loaded correctly
-                if (!data || !data.features || data.features.length === 0) {
-                    throw new Error('No features found in the shapefile');
-                }
-                
-                // Style function for provinces
-                function provinceStyle(feature) {
-                    return {
-                        fillColor: '#cc0000',
-                        weight: 2,
-                        opacity: 1,
-                        color: '#8b0000',
-                        dashArray: '3',
-                        fillOpacity: 0.3
-                    };
-                }
-                
-                // Create GeoJSON layer with styling
-                const geoJsonLayer = L.geoJson(data, {
-                    style: provinceStyle,
-                    onEachFeature: function(feature, layer) {
-                        if (feature.properties) {
-                            let popupContent = '<div class="popup-content">';
-                            for (const property in feature.properties) {
-                                popupContent += `<strong>${property}:</strong> ${feature.properties[property]}<br>`;
-                            }
-                            popupContent += '</div>';
-                            layer.bindPopup(popupContent);
-                        }
+            // Load the GeoJSON file from GitHub
+            fetch('https://raw.githubusercontent.com/HealthHelps/geoAI/main/Provinces.geojson')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
+                    return response.json();
+                })
+                .then(data => {
+                    // Check if data was loaded correctly
+                    if (!data || !data.features || data.features.length === 0) {
+                        throw new Error('No features found in the GeoJSON');
+                    }
+                    
+                    // Style function for provinces
+                    function provinceStyle(feature) {
+                        return {
+                            fillColor: '#cc0000',
+                            weight: 2,
+                            opacity: 1,
+                            color: '#8b0000',
+                            dashArray: '3',
+                            fillOpacity: 0.3
+                        };
+                    }
+                    
+                    // Create GeoJSON layer with styling
+                    const geoJsonLayer = L.geoJson(data, {
+                        style: provinceStyle,
+                        onEachFeature: function(feature, layer) {
+                            if (feature.properties) {
+                                let popupContent = '<div class="popup-content">';
+                                for (const property in feature.properties) {
+                                    popupContent += `<strong>${property}:</strong> ${feature.properties[property]}<br>`;
+                                }
+                                popupContent += '</div>';
+                                layer.bindPopup(popupContent);
+                            }
+                        }
+                    });
+                    
+                    // Clear any existing layers
+                    provinceLayer.clearLayers();
+                    
+                    // Add to province layer
+                    geoJsonLayer.addTo(provinceLayer);
+                    loadedLayers.provinces = geoJsonLayer;
+                    
+                    // Update status
+                    statusElement.textContent = 'Loaded';
+                    
+                    // If checkbox is checked, add to map
+                    if (document.getElementById('province-layer').checked) {
+                        map.addLayer(provinceLayer);
+                    }
+                })
+                .catch(function(error) {
+                    handleGeoJSONError(error, 'province');
                 });
-                
-                // Clear any existing layers
-                provinceLayer.clearLayers();
-                
-                // Add to province layer
-                geoJsonLayer.addTo(provinceLayer);
-                loadedLayers.provinces = geoJsonLayer;
-                
-                // Update status
-                statusElement.textContent = 'Loaded';
-                
-                // If checkbox is checked, add to map
-                if (document.getElementById('province-layer').checked) {
-                    map.addLayer(provinceLayer);
-                }
-            }).catch(function(error) {
-                handleShapefileError(error, 'province');
-            });
         }
         
         // Load municipality boundaries from GitHub
@@ -619,57 +624,65 @@
             
             statusElement.innerHTML = '<div class="loading-indicator"></div>';
             
-            // Load the zipped shapefile from GitHub
-            shp('https://healthhelps.github.io/geoAI/Towns.zip').then(function(data) {
-                // Check if data was loaded correctly
-                if (!data || !data.features || data.features.length === 0) {
-                    throw new Error('No features found in the shapefile');
-                }
-                
-                // Style function for municipalities
-                function municipalityStyle(feature) {
-                    return {
-                        fillColor: '#ff4500',
-                        weight: 1,
-                        opacity: 0.7,
-                        color: '#cc0000',
-                        dashArray: '2',
-                        fillOpacity: 0.2
-                    };
-                }
-                
-                // Create GeoJSON layer with styling
-                const geoJsonLayer = L.geoJson(data, {
-                    style: municipalityStyle,
-                    onEachFeature: function(feature, layer) {
-                        if (feature.properties) {
-                            let popupContent = '<div class="popup-content">';
-                            for (const property in feature.properties) {
-                                popupContent += `<strong>${property}:</strong> ${feature.properties[property]}<br>`;
-                            }
-                            popupContent += '</div>';
-                            layer.bindPopup(popupContent);
-                        }
+            // Load the GeoJSON file from GitHub
+            fetch('https://raw.githubusercontent.com/HealthHelps/geoAI/main/Towns.geojson')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
+                    return response.json();
+                })
+                .then(data => {
+                    // Check if data was loaded correctly
+                    if (!data || !data.features || data.features.length === 0) {
+                        throw new Error('No features found in the GeoJSON');
+                    }
+                    
+                    // Style function for municipalities
+                    function municipalityStyle(feature) {
+                        return {
+                            fillColor: '#ff4500',
+                            weight: 1,
+                            opacity: 0.7,
+                            color: '#cc0000',
+                            dashArray: '2',
+                            fillOpacity: 0.2
+                        };
+                    }
+                    
+                    // Create GeoJSON layer with styling
+                    const geoJsonLayer = L.geoJson(data, {
+                        style: municipalityStyle,
+                        onEachFeature: function(feature, layer) {
+                            if (feature.properties) {
+                                let popupContent = '<div class="popup-content">';
+                                for (const property in feature.properties) {
+                                    popupContent += `<strong>${property}:</strong> ${feature.properties[property]}<br>`;
+                                }
+                                popupContent += '</div>';
+                                layer.bindPopup(popupContent);
+                            }
+                        }
+                    });
+                    
+                    // Clear any existing layers
+                    municipalityLayer.clearLayers();
+                    
+                    // Add to municipality layer
+                    geoJsonLayer.addTo(municipalityLayer);
+                    loadedLayers.municipalities = geoJsonLayer;
+                    
+                    // Update status
+                    statusElement.textContent = 'Loaded';
+                    
+                    // If checkbox is checked, add to map
+                    if (document.getElementById('municipality-layer').checked) {
+                        map.addLayer(municipalityLayer);
+                    }
+                })
+                .catch(function(error) {
+                    handleGeoJSONError(error, 'municipality');
                 });
-                
-                // Clear any existing layers
-                municipalityLayer.clearLayers();
-                
-                // Add to municipality layer
-                geoJsonLayer.addTo(municipalityLayer);
-                loadedLayers.municipalities = geoJsonLayer;
-                
-                // Update status
-                statusElement.textContent = 'Loaded';
-                
-                // If checkbox is checked, add to map
-                if (document.getElementById('municipality-layer').checked) {
-                    map.addLayer(municipalityLayer);
-                }
-            }).catch(function(error) {
-                handleShapefileError(error, 'municipality');
-            });
         }
         
         // Load barangay boundaries from GitHub
@@ -681,57 +694,65 @@
             
             statusElement.innerHTML = '<div class="loading-indicator"></div>';
             
-            // Load the zipped shapefile from GitHub
-            shp('https://healthhelps.github.io/geoAI/Barangay.zip').then(function(data) {
-                // Check if data was loaded correctly
-                if (!data || !data.features || data.features.length === 0) {
-                    throw new Error('No features found in the shapefile');
-                }
-                
-                // Style function for barangays
-                function barangayStyle(feature) {
-                    return {
-                        fillColor: '#ff6b6b',
-                        weight: 0.5,
-                        opacity: 0.5,
-                        color: '#ff4500',
-                        dashArray: '1',
-                        fillOpacity: 0.1
-                    };
-                }
-                
-                // Create GeoJSON layer with styling
-                const geoJsonLayer = L.geoJson(data, {
-                    style: barangayStyle,
-                    onEachFeature: function(feature, layer) {
-                        if (feature.properties) {
-                            let popupContent = '<div class="popup-content">';
-                            for (const property in feature.properties) {
-                                popupContent += `<strong>${property}:</strong> ${feature.properties[property]}<br>`;
-                            }
-                            popupContent += '</div>';
-                            layer.bindPopup(popupContent);
-                        }
+            // Load the GeoJSON file from GitHub
+            fetch('https://raw.githubusercontent.com/HealthHelps/geoAI/main/Barangay.geojson')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
+                    return response.json();
+                })
+                .then(data => {
+                    // Check if data was loaded correctly
+                    if (!data || !data.features || data.features.length === 0) {
+                        throw new Error('No features found in the GeoJSON');
+                    }
+                    
+                    // Style function for barangays
+                    function barangayStyle(feature) {
+                        return {
+                            fillColor: '#ff6b6b',
+                            weight: 0.5,
+                            opacity: 0.5,
+                            color: '#ff4500',
+                            dashArray: '1',
+                            fillOpacity: 0.1
+                        };
+                    }
+                    
+                    // Create GeoJSON layer with styling
+                    const geoJsonLayer = L.geoJson(data, {
+                        style: barangayStyle,
+                        onEachFeature: function(feature, layer) {
+                            if (feature.properties) {
+                                let popupContent = '<div class="popup-content">';
+                                for (const property in feature.properties) {
+                                    popupContent += `<strong>${property}:</strong> ${feature.properties[property]}<br>`;
+                                }
+                                popupContent += '</div>';
+                                layer.bindPopup(popupContent);
+                            }
+                        }
+                    });
+                    
+                    // Clear any existing layers
+                    barangayLayer.clearLayers();
+                    
+                    // Add to barangay layer
+                    geoJsonLayer.addTo(barangayLayer);
+                    loadedLayers.barangays = geoJsonLayer;
+                    
+                    // Update status
+                    statusElement.textContent = 'Loaded';
+                    
+                    // If checkbox is checked, add to map
+                    if (document.getElementById('barangay-layer').checked) {
+                        map.addLayer(barangayLayer);
+                    }
+                })
+                .catch(function(error) {
+                    handleGeoJSONError(error, 'barangay');
                 });
-                
-                // Clear any existing layers
-                barangayLayer.clearLayers();
-                
-                // Add to barangay layer
-                geoJsonLayer.addTo(barangayLayer);
-                loadedLayers.barangays = geoJsonLayer;
-                
-                // Update status
-                statusElement.textContent = 'Loaded';
-                
-                // If checkbox is checked, add to map
-                if (document.getElementById('barangay-layer').checked) {
-                    map.addLayer(barangayLayer);
-                }
-            }).catch(function(error) {
-                handleShapefileError(error, 'barangay');
-            });
         }
         
         // Add sample provinces for demonstration if the real data fails to load
@@ -1015,22 +1036,71 @@
             uploadPanel.style.display = uploadPanel.style.display === 'block' ? 'none' : 'block';
         });
         
-        // Initialize the map click event to show info panel
+        // Process upload button
+        document.getElementById('process-upload').addEventListener('click', () => {
+            alert('Data processing functionality would be implemented here.');
+            document.getElementById('upload-panel').style.display = 'none';
+        });
+        
+        // Export button
+        document.getElementById('export-btn').addEventListener('click', () => {
+            alert('Export functionality would be implemented here.');
+        });
+        
+        // Analyze button
+        document.getElementById('analyze-btn').addEventListener('click', () => {
+            alert('Data analysis functionality would be implemented here.');
+        });
+        
+        // Predict button
+        document.getElementById('predict-btn').addEventListener('click', () => {
+            alert('Prediction functionality would be implemented here.');
+        });
+        
+        // Heatmap buttons
+        document.getElementById('maternal-heatmap-btn').addEventListener('click', () => {
+            alert('Maternal & Child Death Rate heatmap would be shown here.');
+        });
+        
+        document.getElementById('hiv-heatmap-btn').addEventListener('click', () => {
+            alert('HIV/AIDS Death Rate heatmap would be shown here.');
+        });
+        
+        document.getElementById('facility-heatmap-btn').addEventListener('click', () => {
+            alert('Health Facility Coverage heatmap would be shown here.');
+        });
+        
+        document.getElementById('poverty-mnch-btn').addEventListener('click', () => {
+            alert('Poverty & MNCH Intersection analysis would be shown here.');
+        });
+        
+        document.getElementById('poverty-hiv-btn').addEventListener('click', () => {
+            alert('Poverty & HIV Intersection analysis would be shown here.');
+        });
+        
+        // Opacity slider
+        const opacitySlider = document.getElementById('opacity-slider');
+        const opacityValue = document.getElementById('opacity-value');
+        
+        opacitySlider.addEventListener('input', () => {
+            opacityValue.textContent = opacitySlider.value;
+            // In a real application, this would update the opacity of the thematic layers
+        });
+        
+        // Click event for map info
         map.on('click', (e) => {
             const infoPanel = document.getElementById('info-panel');
             infoPanel.innerHTML = `
                 <h4>Location Information</h4>
                 <p><strong>Latitude:</strong> ${e.latlng.lat.toFixed(4)}</p>
                 <p><strong>Longitude:</strong> ${e.latlng.lng.toFixed(4)}</p>
-                <p>Click on a boundary or facility for more information</p>
+                <p>Click on a boundary to get more information</p>
             `;
             infoPanel.style.display = 'block';
         });
         
-        // Close info panel when clicking on the map
-        map.on('popupopen', () => {
-            document.getElementById('info-panel').style.display = 'none';
-        });
+        // Initialize the info panel
+        document.getElementById('info-panel').style.display = 'block';
     </script>
 </body>
 </html>
