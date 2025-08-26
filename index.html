@@ -705,7 +705,23 @@
     };
     
     // Add default basemap (Satellite instead of OSM)
-    basemaps.satellite.addTo(map);
+basemaps.satellite.addTo(map);
+
+// Basemap selector functionality
+document.querySelectorAll('input[name="basemap"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        // Remove all basemaps
+        Object.values(basemaps).forEach(layer => {
+            map.removeLayer(layer);
+        });
+        
+        // Add the selected basemap
+        basemaps[e.target.value].addTo(map);
+    });
+});
+
+// Set the initial checked state
+document.getElementById('satellite').checked = true;
         
         // Add layer groups for boundaries
         const regionLayer = L.layerGroup().addTo(map);
