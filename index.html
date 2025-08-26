@@ -32,9 +32,9 @@
     height: 70px;
     background: linear-gradient(
         to right, 
-        rgba(139, 0, 0, 0.5) 85%, 
-        rgba(0, 0, 0, 0.5) 85%, 
-        rgba(0, 0, 0, 0.5) 87%, 
+        rgba(139, 0, 0, 0.25) 85%, 
+        rgba(0, 0, 0, 0.25) 85%, 
+        rgba(0, 0, 0, 0.25) 87%, 
         transparent 87%
     );
     color: white;
@@ -45,7 +45,7 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-/* Make the white/clear area 50% transparent */
+/* Make the white/clear area 25% more transparent */
 #header::after {
     content: '';
     position: absolute;
@@ -53,7 +53,7 @@
     right: 40px;
     width: 40px;
     height: 40px;
-    background-color: rgba(255, 255, 255, 0.1); /* 50% of original 0.2 */
+    background-color: rgba(255, 255, 255, 0.05); /* 25% of original 0.2 */
     border-radius: 50%;
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
