@@ -312,7 +312,7 @@
     
 <div id="main-container">
     <div id="sidebar">
-        <!-- NEW BASEMAP PANEL ADDED AT THE TOP -->
+        <!-- NEW BASEMAP PANEL -->
         <div class="panel active">
             <div class="panel-header">
                 <span>Basemap</span>
@@ -328,7 +328,7 @@
             </div>
         </div>
 
-        <!-- EXISTING BOUNDARY LAYERS PANEL (unchanged) -->
+        <!-- BOUNDARY LAYERS PANEL -->
         <div class="panel active">
             <div class="panel-header">
                 <span>Boundary Layers</span>
@@ -363,35 +363,152 @@
             </div>
         </div>
 
-        <!-- YOUR OTHER EXISTING PANELS CONTINUE HERE -->
+        <!-- HEALTH FACILITIES PANEL -->
         <div class="panel">
             <div class="panel-header">
                 <span>Health Facilities</span>
                 <i class="fas fa-chevron-down"></i>
             </div>
-            <!-- ... health facilities content ... -->
+            <div class="panel-content">
+                <div class="layer-control">
+                    <input type="checkbox" id="rhu-layer">
+                    <label for="rhu-layer">Regional Health Units (RHUs)</label>
+                </div>
+                <div class="layer-control">
+                    <input type="checkbox" id="phu-layer">
+                    <label for="phu-layer">Provincial Health Units (PHUs)</label>
+                </div>
+                <div class="layer-control">
+                    <input type="checkbox" id="ruralhu-layer">
+                    <label for="ruralhu-layer">Rural Health Units</label>
+                </div>
+                <div class="layer-control">
+                    <input type="checkbox" id="bhc-layer">
+                    <label for="bhc-layer">Barangay Health Centers (BHCs)</label>
+                </div>
+                <div class="layer-control">
+                    <input type="checkbox" id="lyingin-layer">
+                    <label for="lyingin-layer">Lying-In Clinics</label>
+                </div>
+                
+                <div class="slider-container">
+                    <label>Services Filter:</label>
+                    <select id="services-filter" class="slider">
+                        <option value="all">All Services</option>
+                        <option value="mnch">Maternal, Newborn, and Child Health (MNCH)</option>
+                        <option value="fp">Family Planning (FP)</option>
+                        <option value="hiv">HIV/AIDS Health Services</option>
+                    </select>
+                </div>
+            </div>
         </div>
-        
+
+        <!-- THEMATIC MAPS PANEL -->
         <div class="panel">
             <div class="panel-header">
                 <span>Thematic Maps</span>
                 <i class="fas fa-chevron-down"></i>
             </div>
-            <!-- ... thematic maps content ... -->
+            <div class="panel-content">
+                <button class="button" id="maternal-heatmap-btn">
+                    <i class="fas fa-baby"></i> Maternal & Child Death Rate
+                </button>
+                <button class="button" id="hiv-heatmap-btn">
+                    <i class="fas fa-virus"></i> HIV/AIDS Death Rate
+                </button>
+                <button class="button" id="facility-heatmap-btn">
+                    <i class="fas fa-hospital"></i> Health Facility Coverage
+                </button>
+                <button class="button" id="poverty-mnch-btn">
+                    <i class="fas fa-exclamation-triangle"></i> Poverty & MNCH Intersection
+                </button>
+                <button class="button" id="poverty-hiv-btn">
+                    <i class="fas fa-exclamation-triangle"></i> Poverty & HIV Intersection
+                </button>
+                
+                <div class="slider-container">
+                    <label for="year-slider">Year: <span id="year-value">2023</span></label>
+                    <input type="range" id="year-slider" class="slider" min="2010" max="2025" value="2023" step="1">
+                </div>
+                
+                <div class="slider-container">
+                    <label for="opacity-slider">Opacity: <span id="opacity-value">70</span>%</label>
+                    <input type="range" id="opacity-slider" class="slider" min="0" max="100" value="70" step="1">
+                </div>
+            </div>
         </div>
-        
+
+        <!-- GEOAI TOOLS PANEL -->
         <div class="panel">
             <div class="panel-header">
                 <span>GeoAI Tools</span>
                 <i class="fas fa-chevron-down"></i>
             </div>
-            <!-- ... geoAI tools content ... -->
+            <div class="panel-content">
+                <button class="button" id="upload-btn">
+                    <i class="fas fa-upload"></i> Upload Data
+                </button>
+                <button class="button" id="analyze-btn">
+                    <i class="fas fa-chart-line"></i> Analyze Data
+                </button>
+                <button class="button" id="predict-btn">
+                    <i class="fas fa-robot"></i> Predict Trends
+                </button>
+                <button class="button" id="export-btn">
+                    <i class="fas fa-download"></i> Export Map
+                </button>
+            </div>
         </div>
     </div>
     
-    <!-- REST OF YOUR MAP CONTAINER CODE -->
+    <!-- MAP CONTAINER (unchanged) -->
     <div id="map-container">
-        <!-- ... your map and other elements ... -->
+        <div id="map"></div>
+        
+        <button class="toggle-sidebar" id="sidebar-toggle">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        
+        <div class="legend" id="legend">
+            <h4>Boundary Layers</h4>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #8b0000;"></div>
+                <span>Regions</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #cc0000;"></div>
+                <span>Provinces</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ff4500;"></div>
+                <span>Municipalities</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ff6b6b;"></div>
+                <span>Barangays</span>
+            </div>
+        </div>
+        
+        <div class="info-panel" id="info-panel">
+            <h4>Location Information</h4>
+            <p>Click on the map to get information</p>
+        </div>
+        
+        <div class="year-slider-container" id="year-slider-container">
+            <label for="timeline-slider">Timeline: <span id="timeline-year">2023</span></label>
+            <input type="range" id="timeline-slider" class="slider" min="2010" max="2025" value="2023" step="1">
+        </div>
+        
+        <!-- REMOVE the standalone basemap-selector from here -->
+        
+        <div class="upload-panel" id="upload-panel">
+            <h4>Upload Geospatial Data</h4>
+            <input type="file" id="file-upload" accept=".shp,.geojson,.kml,.gpkg" multiple>
+            <p>Supported formats: Shapefile, GeoJSON, KML</p>
+            <button class="button" id="process-upload">
+                <i class="fas fa-cog"></i> Process Data
+            </button>
+        </div>
     </div>
 </div>
             
