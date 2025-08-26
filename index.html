@@ -11,7 +11,19 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     
-<style>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            overflow: hidden;
+            color: #333;
+        }
+        
     #header {
         position: absolute;
         top: 0;
@@ -55,57 +67,9 @@
         z-index: 1001;
         cursor: pointer;
     }
-</style>
-
-html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HealthHelp GeoAI - Header Redesign</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background-color: #f0f2f5;
-            color: #333;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        
-        /* Header styling */
-        #header {
-            position: relative;
-            width: 100%;
-            height: 70px;
-            background: linear-gradient(to right, #8b0000 350px, #8b0000 350px, 
-                                      transparent 350px, transparent 351px, 
-                                      #8b0000 351px, #8b0000 calc(100% - 70px),
-                                      rgba(255, 255, 255, 0.2) calc(100% - 70px), 
-                                      rgba(255, 255, 255, 0.2) 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-        }
         
         #logo {
-            height: 40px;
+            height: 50px;
             margin-right: 15px;
         }
         
@@ -114,55 +78,36 @@ html
             font-weight: bold;
         }
         
-        /* Close button area */
-        .close-area {
-            position: absolute;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-        
-        .close-button {
-            font-size: 24px;
-            color: rgba(255, 255, 255, 0.9);
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-        
-        .close-button:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.1);
-        }
-        
-        /* Main content */
         #main-container {
+            position: absolute;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 70px);
             display: flex;
-            min-height: 500px;
         }
         
         #sidebar {
             width: 350px;
+            height: 100%;
             background-color: #f8f9fa;
             border-right: 1px solid #ddd;
-            padding: 20px;
+            overflow-y: auto;
+            padding: 15px;
+            z-index: 900;
+            transition: transform 0.3s ease;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
         }
         
-        #content {
+        #map-container {
             flex: 1;
-            padding: 20px;
-            background: white;
+            height: 100%;
+            position: relative;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
         }
         
         .panel {
@@ -174,10 +119,11 @@ html
         }
         
         .panel-header {
-            background-color: #a52a2a;
+            background-color: #a52a2a; /* Maroon */
             color: white;
             padding: 10px 15px;
             font-weight: bold;
+            cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -185,6 +131,11 @@ html
         
         .panel-content {
             padding: 15px;
+            display: none;
+        }
+        
+        .panel.active .panel-content {
+            display: block;
         }
         
         .layer-control {
@@ -197,57 +148,188 @@ html
             margin-right: 10px;
         }
         
-        .status {
-            margin-left: auto;
+        .slider-container {
+            margin: 15px 0;
+        }
+        
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #8b0000;
+        }
+        
+        .slider {
+            width: 100%;
+        }
+        
+        .button {
+            background-color: #8b0000;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px 0;
+            width: 100%;
+            text-align: left;
+        }
+        
+        .button:hover {
+            background-color: #a52a2a;
+        }
+        
+        .button i {
+            margin-right: 8px;
+        }
+        
+        .toggle-sidebar {
+            position: absolute;
+            top: 80px;
+            left: 350px;
+            z-index: 950;
+            background: #8b0000;
+            color: white;
+            border: none;
+            width: 20px;
+            height: 40px;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            z-index: 800;
+            max-width: 200px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+            border: 1px solid #999;
+        }
+        
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            z-index: 800;
+            max-width: 300px;
+            display: none;
+        }
+        
+        .health-facility-marker {
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+        
+        .year-slider-container {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%); 
+            z-index: 800;
+            width: 60%;
+            min-width: 300px;
+        }
+        
+        .basemap-selector {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            z-index: 800;
+        }
+        
+        .upload-panel {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            position: absolute;
+            top: 150px;
+            right: 20px;
+            z-index: 800;
+            width: 250px;
+            display: none;
+        }
+        
+        .loading-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(139, 0, 0, 0.3);
+            border-radius: 50%;
+            border-top-color: #8b0000;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .layer-status {
             font-size: 0.8rem;
             color: #666;
+            margin-left: 10px;
         }
         
-        .loading {
-            color: #1e90ff;
+        .error-message {
+            color: #d9534f;
+            font-size: 0.8rem;
+            margin-top: 5px;
         }
         
-        .click-to-load {
-            color: #ff8c00;
+        .warning-message {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 0.9rem;
         }
         
-        h2 {
-            color: #8b0000;
-            margin-bottom: 20px;
+        .progress-bar {
+            height: 5px;
+            background-color: #e9ecef;
+            border-radius: 3px;
+            margin-top: 5px;
+            overflow: hidden;
         }
         
-        p {
-            line-height: 1.6;
-            margin-bottom: 15px;
-        }
-        
-        .instructions {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 5px;
-            margin-top: 30px;
-            border-left: 4px solid #8b0000;
-        }
-        
-        .instructions h3 {
-            color: #8b0000;
-            margin-bottom: 10px;
-        }
-        
-        @media (max-width: 768px) {
-            #main-container {
-                flex-direction: column;
-            }
-            
-            #sidebar {
-                width: 100%;
-                border-right: none;
-                border-bottom: 1px solid #ddd;
-            }
-            
-            #header {
-                background: linear-gradient(to right, #8b0000 100%);
-            }
+        .progress-bar-fill {
+            height: 100%;
+            background-color: #8b0000;
+            width: 0%;
+            transition: width 0.3s ease;
         }
     </style>
 </head>
