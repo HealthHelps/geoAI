@@ -1280,17 +1280,7 @@ document.getElementById('satellite').checked = true;
             }
         });
         
-        // Basemap selector functionality
-        document.getElementById('basemap-select').addEventListener('change', (e) => {
-            // Remove all basemaps
-            Object.values(basemaps).forEach(layer => {
-                map.removeLayer(layer);
-            });
-            
-            // Add the selected basemap
-            basemaps[e.target.value].addTo(map);
-        });
-        
+       
         // Upload button functionality
         document.getElementById('upload-btn').addEventListener('click', () => {
             const uploadPanel = document.getElementById('upload-panel');
