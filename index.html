@@ -320,16 +320,42 @@
     border-radius: 8px;
 }
         
-        .basemap-selector {
-            position: absolute;
-            top: 80px;
-            right: 20px;
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-            z-index: 800;
-        }
+.basemap-selector h4 {
+    margin: 0 0 10px 0;
+    color: #8b0000;
+    font-size: 0.95rem;
+    text-align: center;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(139, 0, 0, 0.1);
+    padding-bottom: 8px;
+}
+
+.basemap-option {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    margin: 4px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.basemap-option:hover {
+    background: rgba(139, 0, 0, 0.1);
+}
+
+.basemap-option input[type="radio"] {
+    margin-right: 8px;
+    accent-color: #8b0000;
+    cursor: pointer;
+}
+
+.basemap-option label {
+    cursor: pointer;
+    margin: 0;
+    font-size: 0.85rem;
+    color: #333;
+}
         
         .upload-panel {
             background: white;
