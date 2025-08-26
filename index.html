@@ -352,58 +352,6 @@
     border-radius: 8px;
 
 }
-/* Basemap Selector Container */
-.basemap-selector {
-    background: rgba(255, 255, 255, 0.25);
-    padding: 12px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-    position: absolute;
-    top: 80px;
-    right: 20px;
-    z-index: 800;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(139, 0, 0, 0.15);
-    max-width: 180px;
-}
-        
-.basemap-selector h4 {
-    margin: 0 0 10px 0;
-    color: #8b0000;
-    font-size: 0.95rem;
-    text-align: center;
-    font-weight: 600;
-    border-bottom: 1px solid rgba(139, 0, 0, 0.1);
-    padding-bottom: 8px;
-}
-
-.basemap-option {
-    display: flex;
-    align-items: center;
-    padding: 6px 8px;
-    margin: 4px 0;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.basemap-option:hover {
-    background: rgba(139, 0, 0, 0.1);
-}
-
-.basemap-option input[type="radio"] {
-    margin-right: 8px;
-    accent-color: #8b0000;
-    cursor: pointer;
-}
-
-.basemap-option label {
-    cursor: pointer;
-    margin: 0;
-    font-size: 0.85rem;
-    color: #333;
-}
         
         .upload-panel {
             background: white;
@@ -651,27 +599,6 @@
         
         <div id="map-container">
             <div id="map"></div>
-
-                <!-- Add the basemap selector here -->
-    <div class="basemap-selector" id="basemap-selector">
-        <h4>Base Maps</h4>
-        <div class="basemap-option">
-            <input type="radio" id="osm" name="basemap" value="osm">
-            <label for="osm">OpenStreetMap</label>
-        </div>
-        <div class="basemap-option">
-            <input type="radio" id="satellite" name="basemap" value="satellite" checked>
-            <label for="satellite">Satellite</label>
-        </div>
-        <div class="basemap-option">
-            <input type="radio" id="terrain" name="basemap" value="terrain">
-            <label for="terrain">Terrain</label>
-        </div>
-        <div class="basemap-option">
-            <input type="radio" id="dark" name="basemap" value="dark">
-            <label for="dark">Dark</label>
-        </div>
-    </div>
             
             <button class="toggle-sidebar" id="sidebar-toggle">
                 <i class="fas fa-chevron-left"></i>
@@ -753,481 +680,475 @@
     };
     
     // Add default basemap (Satellite instead of OSM)
-basemaps.satellite.addTo(map);
+    basemaps.satellite.addTo(map);
 
-// Basemap selector functionality
-document.querySelectorAll('input[name="basemap"]').forEach(radio => {
-    radio.addEventListener('change', (e) => {
-        // Remove all basemaps
-        Object.values(basemaps).forEach(layer => {
-            map.removeLayer(layer);
-        });
+    // Set the initial checked state for basemaps
+    // Note: The basemap selector UI has been removed but functionality remains
+    // Satellite is the default basemap as per the original code
+    
+    // Add layer groups for boundaries
+    const regionLayer = L.layerGroup().addTo(map);
+    const provinceLayer = L.layerGroup();
+    const municipalityLayer = L.layerGroup();
+    const barangayLayer = L.layerGroup();
+    
+    // Store loaded layers for toggle functionality
+    const loadedLayers = {
+        provinces: null,
+        municipalities: null,
+        barangays: null
+    };
+    
+    // Function to handle GeoJSON loading errors
+    function handleGeoJSONError(error, layerType) {
+        console.error(`Error loading ${layerType}:`, error);
+        const statusElement = document.getElementById(`${layerType}-status`);
+        statusElement.textContent = 'Error loading';
         
-        // Add the selected basemap
-        basemaps[e.target.value].addTo(map);
-    });
-});
-
-// Set the initial checked state
-document.getElementById('satellite').checked = true;
+        // Add error message with retry button
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.innerHTML = `Failed to load ${layerType}. 
+            <a href="#" onclick="load${layerType.charAt(0).toUpperCase() + layerType.slice(1)}(); return false;">
+                Retry
+            </a>`;
         
-        // Add layer groups for boundaries
-        const regionLayer = L.layerGroup().addTo(map);
-        const provinceLayer = L.layerGroup();
-        const municipalityLayer = L.layerGroup();
-        const barangayLayer = L.layerGroup();
+        statusElement.parentNode.appendChild(errorDiv);
         
-        // Store loaded layers for toggle functionality
-        const loadedLayers = {
-            provinces: null,
-            municipalities: null,
-            barangays: null
-        };
-        
-        // Function to handle GeoJSON loading errors
-        function handleGeoJSONError(error, layerType) {
-            console.error(`Error loading ${layerType}:`, error);
-            const statusElement = document.getElementById(`${layerType}-status`);
-            statusElement.textContent = 'Error loading';
-            
-            // Add error message with retry button
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.innerHTML = `Failed to load ${layerType}. 
-                <a href="#" onclick="load${layerType.charAt(0).toUpperCase() + layerType.slice(1)}(); return false;">
-                    Retry
-                </a>`;
-            
-            statusElement.parentNode.appendChild(errorDiv);
-            
-            // Add sample data for demonstration
-            if (layerType === 'province') {
-                addSampleProvinces();
-            } else if (layerType === 'municipality') {
-                addSampleMunicipalities();
-            } else if (layerType === 'barangay') {
-                addSampleBarangays();
-            }
+        // Add sample data for demonstration
+        if (layerType === 'province') {
+            addSampleProvinces();
+        } else if (layerType === 'municipality') {
+            addSampleMunicipalities();
+        } else if (layerType === 'barangay') {
+            addSampleBarangays();
         }
+    }
+    
+    // Load province boundaries from GitHub
+    function loadProvinces() {
+        const statusElement = document.getElementById('province-status');
+        // Clear any previous error messages
+        const errorMessages = statusElement.parentNode.querySelectorAll('.error-message');
+        errorMessages.forEach(msg => msg.remove());
         
-        // Load province boundaries from GitHub
-        function loadProvinces() {
-            const statusElement = document.getElementById('province-status');
-            // Clear any previous error messages
-            const errorMessages = statusElement.parentNode.querySelectorAll('.error-message');
-            errorMessages.forEach(msg => msg.remove());
-            
-            statusElement.innerHTML = '<div class="loading-indicator"></div>';
-            
-            // Load the GeoJSON file from GitHub
-            fetch('https://raw.githubusercontent.com/HealthHelps/geoAI/main/Provinces.geojson')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // Check if data was loaded correctly
-                    if (!data || !data.features || data.features.length === 0) {
-                        throw new Error('No features found in the GeoJSON');
-                    }
-                    
-                    // Style function for provinces
-                    function provinceStyle(feature) {
-                        return {
-                            fillColor: '#cc0000',
-                            weight: 2,
-                            opacity: 1,
-                            color: '#8b0000',
-                            dashArray: '3',
-                            fillOpacity: 0.3
-                        };
-                    }
-                    
-                    // Create GeoJSON layer with styling
-                    const geoJsonLayer = L.geoJson(data, {
-                        style: provinceStyle,
-                        onEachFeature: function(feature, layer) {
-                            if (feature.properties) {
-                                let popupContent = '<div class="popup-content">';
-                                for (const property in feature.properties) {
-                                    popupContent += `<strong>${property}:</strong> ${feature.properties[property]}<br>`;
-                                }
-                                popupContent += '</div>';
-                                layer.bindPopup(popupContent);
+        statusElement.innerHTML = '<div class="loading-indicator"></div>';
+        
+        // Load the GeoJSON file from GitHub
+        fetch('https://raw.githubusercontent.com/HealthHelps/geoAI/main/Provinces.geojson')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Check if data was loaded correctly
+                if (!data || !data.features || data.features.length === 0) {
+                    throw new Error('No features found in the GeoJSON');
+                }
+                
+                // Style function for provinces
+                function provinceStyle(feature) {
+                    return {
+                        fillColor: '#cc0000',
+                        weight: 2,
+                        opacity: 1,
+                        color: '#8b0000',
+                        dashArray: '3',
+                        fillOpacity: 0.3
+                    };
+                }
+                
+                // Create GeoJSON layer with styling
+                const geoJsonLayer = L.geoJson(data, {
+                    style: provinceStyle,
+                    onEachFeature: function(feature, layer) {
+                        if (feature.properties) {
+                            let popupContent = '<div class="popup-content">';
+                            for (const property in feature.properties) {
+                                popupContent += `<strong>${property}:</strong> ${feature.properties[property]}<br>`;
                             }
+                            popupContent += '</div>';
+                            layer.bindPopup(popupContent);
                         }
-                    });
-                    
-                    // Clear any existing layers
-                    provinceLayer.clearLayers();
-                    
-                    // Add to province layer
-                    geoJsonLayer.addTo(provinceLayer);
-                    loadedLayers.provinces = geoJsonLayer;
-                    
-                    // Update status
-                    statusElement.textContent = 'Loaded';
-                    
-                    // If checkbox is checked, add to map
-                    if (document.getElementById('province-layer').checked) {
-                        map.addLayer(provinceLayer);
                     }
-                })
-                .catch(function(error) {
-                    handleGeoJSONError(error, 'province');
                 });
-        }
+                
+                // Clear any existing layers
+                provinceLayer.clearLayers();
+                
+                // Add to province layer
+                geoJsonLayer.addTo(provinceLayer);
+                loadedLayers.provinces = geoJsonLayer;
+                
+                // Update status
+                statusElement.textContent = 'Loaded';
+                
+                // If checkbox is checked, add to map
+                if (document.getElementById('province-layer').checked) {
+                    map.addLayer(provinceLayer);
+                }
+            })
+            .catch(function(error) {
+                handleGeoJSONError(error, 'province');
+            });
+    }
+    
+    // Load municipality boundaries from GitHub
+    function loadMunicipalities() {
+        const statusElement = document.getElementById('municipality-status');
+        // Clear any previous error messages
+        const errorMessages = statusElement.parentNode.querySelectorAll('.error-message');
+        errorMessages.forEach(msg => msg.remove());
         
-        // Load municipality boundaries from GitHub
-        function loadMunicipalities() {
-            const statusElement = document.getElementById('municipality-status');
-            // Clear any previous error messages
-            const errorMessages = statusElement.parentNode.querySelectorAll('.error-message');
-            errorMessages.forEach(msg => msg.remove());
-            
-            statusElement.innerHTML = '<div class="loading-indicator"></div>';
-            
-            // Load the GeoJSON file from GitHub
-            fetch('https://raw.githubusercontent.com/HealthHelps/geoAI/main/Towns.geojson')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // Check if data was loaded correctly
-                    if (!data || !data.features || data.features.length === 0) {
-                        throw new Error('No features found in the GeoJSON');
-                    }
-                    
-                    // Style function for municipalities
-                    function municipalityStyle(feature) {
-                        return {
-                            fillColor: '#ff4500',
-                            weight: 1,
-                            opacity: 0.7,
-                            color: '#cc0000',
-                            dashArray: '2',
-                            fillOpacity: 0.2
-                        };
-                    }
-                    
-                    // Create GeoJSON layer with styling
-                    const geoJsonLayer = L.geoJson(data, {
-                        style: municipalityStyle,
-                        onEachFeature: function(feature, layer) {
-                            if (feature.properties) {
-                                let popupContent = '<div class="popup-content">';
-                                for (const property in feature.properties) {
-                                    popupContent += `<strong>${property}:</strong> ${feature.properties[property]}<br>`;
-                                }
-                                popupContent += '</div>';
-                                layer.bindPopup(popupContent);
+        statusElement.innerHTML = '<div class="loading-indicator"></div>';
+        
+        // Load the GeoJSON file from GitHub
+        fetch('https://raw.githubusercontent.com/HealthHelps/geoAI/main/Towns.geojson')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Check if data was loaded correctly
+                if (!data || !data.features || data.features.length === 0) {
+                    throw new Error('No features found in the GeoJSON');
+                }
+                
+                // Style function for municipalities
+                function municipalityStyle(feature) {
+                    return {
+                        fillColor: '#ff4500',
+                        weight: 1,
+                        opacity: 0.7,
+                        color: '#cc0000',
+                        dashArray: '2',
+                        fillOpacity: 0.2
+                    };
+                }
+                
+                // Create GeoJSON layer with styling
+                const geoJsonLayer = L.geoJson(data, {
+                    style: municipalityStyle,
+                    onEachFeature: function(feature, layer) {
+                        if (feature.properties) {
+                            let popupContent = '<div class="popup-content">';
+                            for (const property in feature.properties) {
+                                popupContent += `<strong>${property}:</strong> ${feature.properties[property]}<br>`;
                             }
+                            popupContent += '</div>';
+                            layer.bindPopup(popupContent);
                         }
-                    });
-                    
-                    // Clear any existing layers
-                    municipalityLayer.clearLayers();
-                    
-                    // Add to municipality layer
-                    geoJsonLayer.addTo(municipalityLayer);
-                    loadedLayers.municipalities = geoJsonLayer;
-                    
-                    // Update status
-                    statusElement.textContent = 'Loaded';
-                    
-                    // If checkbox is checked, add to map
-                    if (document.getElementById('municipality-layer').checked) {
-                        map.addLayer(municipalityLayer);
                     }
-                })
-                .catch(function(error) {
-                    handleGeoJSONError(error, 'municipality');
                 });
-        }
+                
+                // Clear any existing layers
+                municipalityLayer.clearLayers();
+                
+                // Add to municipality layer
+                geoJsonLayer.addTo(municipalityLayer);
+                loadedLayers.municipalities = geoJsonLayer;
+                
+                // Update status
+                statusElement.textContent = 'Loaded';
+                
+                // If checkbox is checked, add to map
+                if (document.getElementById('municipality-layer').checked) {
+                    map.addLayer(municipalityLayer);
+                }
+            })
+            .catch(function(error) {
+                handleGeoJSONError(error, 'municipality');
+            });
+    }
+    
+    // Load barangay boundaries from GitHub with better error handling
+    function loadBarangays() {
+        const statusElement = document.getElementById('barangay-status');
+        const warningElement = document.getElementById('barangay-warning');
+        const progressElement = document.getElementById('barangay-progress');
         
-        // Load barangay boundaries from GitHub with better error handling
-        function loadBarangays() {
-            const statusElement = document.getElementById('barangay-status');
-            const warningElement = document.getElementById('barangay-warning');
-            const progressElement = document.getElementById('barangay-progress');
-            
-            // Clear any previous error messages
-            const errorMessages = statusElement.parentNode.querySelectorAll('.error-message');
-            errorMessages.forEach(msg => msg.remove());
-            
-            statusElement.innerHTML = '<div class="loading-indicator"></div>';
-            warningElement.style.display = 'block';
-            progressElement.style.width = '10%';
-            
-            // Load the GeoJSON file from GitHub
-            fetch('https://raw.githubusercontent.com/HealthHelps/geoAI/main/Barangays.geojson')
-                .then(response => {
-                    progressElement.style.width = '30%';
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    progressElement.style.width = '60%';
-                    // Check if data was loaded correctly
-                    if (!data || !data.features || data.features.length === 0) {
-                        throw new Error('No features found in the GeoJSON');
-                    }
-                    
-                    // Style function for barangays
-                    function barangayStyle(feature) {
-                        return {
-                            fillColor: '#ff6b6b',
-                            weight: 0.5,
-                            opacity: 0.5,
-                            color: '#ff4500',
-                            dashArray: '1',
-                            fillOpacity: 0.1
-                        };
-                    }
-                    
-                    // Create GeoJSON layer with styling
-                    const geoJsonLayer = L.geoJson(data, {
-                        style: barangayStyle,
-                        onEachFeature: function(feature, layer) {
-                            if (feature.properties) {
-                                let popupContent = '<div class="popup-content">';
-                                for (const property in feature.properties) {
-                                    popupContent += `<strong>${property}:</strong> ${feature.properties[property]}<br>`;
-                                }
-                                popupContent += '</div>';
-                                layer.bindPopup(popupContent);
+        // Clear any previous error messages
+        const errorMessages = statusElement.parentNode.querySelectorAll('.error-message');
+        errorMessages.forEach(msg => msg.remove());
+        
+        statusElement.innerHTML = '<div class="loading-indicator"></div>';
+        warningElement.style.display = 'block';
+        progressElement.style.width = '10%';
+        
+        // Load the GeoJSON file from GitHub
+        fetch('https://raw.githubusercontent.com/HealthHelps/geoAI/main/Barangays.geojson')
+            .then(response => {
+                progressElement.style.width = '30%';
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                progressElement.style.width = '60%';
+                // Check if data was loaded correctly
+                if (!data || !data.features || data.features.length === 0) {
+                    throw new Error('No features found in the GeoJSON');
+                }
+                
+                // Style function for barangays
+                function barangayStyle(feature) {
+                    return {
+                        fillColor: '#ff6b6b',
+                        weight: 0.5,
+                        opacity: 0.5,
+                        color: '#ff4500',
+                        dashArray: '1',
+                        fillOpacity: 0.1
+                    };
+                }
+                
+                // Create GeoJSON layer with styling
+                const geoJsonLayer = L.geoJson(data, {
+                    style: barangayStyle,
+                    onEachFeature: function(feature, layer) {
+                        if (feature.properties) {
+                            let popupContent = '<div class="popup-content">';
+                            for (const property in feature.properties) {
+                                popupContent += `<strong>${property}:</strong> ${feature.properties[property]}<br>`;
                             }
+                            popupContent += '</div>';
+                            layer.bindPopup(popupContent);
                         }
-                    });
-                    
-                    progressElement.style.width = '90%';
-                    
-                    // Clear any existing layers
-                    barangayLayer.clearLayers();
-                    
-                    // Add to barangay layer
-                    geoJsonLayer.addTo(barangayLayer);
-                    loadedLayers.barangays = geoJsonLayer;
-                    
-                    // Update status
-                    statusElement.textContent = 'Loaded';
-                    progressElement.style.width = '100%';
-                    
-                    // Hide warning after a short delay
-                    setTimeout(() => {
-                        warningElement.style.display = 'none';
-                    }, 2000);
-                    
-                    // If checkbox is checked, add to map
-                    if (document.getElementById('barangay-layer').checked) {
-                        map.addLayer(barangayLayer);
                     }
-                })
-                .catch(function(error) {
-                    handleGeoJSONError(error, 'barangay');
+                });
+                
+                progressElement.style.width = '90%';
+                
+                // Clear any existing layers
+                barangayLayer.clearLayers();
+                
+                // Add to barangay layer
+                geoJsonLayer.addTo(barangayLayer);
+                loadedLayers.barangays = geoJsonLayer;
+                
+                // Update status
+                statusElement.textContent = 'Loaded';
+                progressElement.style.width = '100%';
+                
+                // Hide warning after a short delay
+                setTimeout(() => {
                     warningElement.style.display = 'none';
-                });
-        }
-        
-        // Add sample provinces for demonstration if the real data fails to load
-        function addSampleProvinces() {
-            // Sample provinces (just for demonstration)
-            const provinces = [
-                {
-                    name: "La Union",
-                    coords: [
-                        [17.5, 120.2],
-                        [17.5, 120.8],
-                        [16.8, 120.8],
-                        [16.8, 120.2]
-                    ]
-                },
-                {
-                    name: "Pangasinan",
-                    coords: [
-                        [16.8, 119.8],
-                        [16.8, 120.5],
-                        [15.8, 120.5],
-                        [15.8, 119.8]
-                    ]
-                },
-                {
-                    name: "Bulacan",
-                    coords: [
-                        [15.2, 120.8],
-                        [15.2, 121.3],
-                        [14.7, 121.3],
-                        [14.7, 120.8]
-                    ]
+                }, 2000);
+                
+                // If checkbox is checked, add to map
+                if (document.getElementById('barangay-layer').checked) {
+                    map.addLayer(barangayLayer);
                 }
-            ];
-            
-            // Clear any existing layers
-            provinceLayer.clearLayers();
-            
-            // Add sample provinces
-            provinces.forEach(province => {
-                L.polygon(province.coords, {
-                    color: '#cc0000',
-                    weight: 2,
-                    fillOpacity: 0.3
-                }).bindPopup(province.name + ' Province (Sample Data)').addTo(provinceLayer);
+            })
+            .catch(function(error) {
+                handleGeoJSONError(error, 'barangay');
+                warningElement.style.display = 'none';
             });
-            
-            // If checkbox is checked, add to map
-            if (document.getElementById('province-layer').checked) {
-                map.addLayer(provinceLayer);
+    }
+    
+    // Add sample provinces for demonstration if the real data fails to load
+    function addSampleProvinces() {
+        // Sample provinces (just for demonstration)
+        const provinces = [
+            {
+                name: "La Union",
+                coords: [
+                    [17.5, 120.2],
+                    [17.5, 120.8],
+                    [16.8, 120.8],
+                    [16.8, 120.2]
+                ]
+            },
+            {
+                name: "Pangasinan",
+                coords: [
+                    [16.8, 119.8],
+                    [16.8, 120.5],
+                    [15.8, 120.5],
+                    [15.8, 119.8]
+                ]
+            },
+            {
+                name: "Bulacan",
+                coords: [
+                    [15.2, 120.8],
+                    [15.2, 121.3],
+                    [14.7, 121.3],
+                    [14.7, 120.8]
+                ]
             }
-            
-            document.getElementById('province-status').textContent = 'Sample data';
-        }
+        ];
         
-        // Add sample municipalities for demonstration
-        function addSampleMunicipalities() {
-            // Sample municipalities (just for demonstration)
-            const municipalities = [
-                {
-                    name: "San Fernando",
-                    coords: [
-                        [16.65, 120.35],
-                        [16.65, 120.45],
-                        [16.55, 120.45],
-                        [16.55, 120.35]
-                    ]
-                },
-                {
-                    name: "Dagupan",
-                    coords: [
-                        [16.08, 120.38],
-                        [16.08, 120.42],
-                        [16.04, 120.42],
-                        [16.04, 120.38]
-                    ]
-                }
-            ];
-            
-            // Clear any existing layers
-            municipalityLayer.clearLayers();
-            
-            // Add sample municipalities
-            municipalities.forEach(municipality => {
-                L.polygon(municipality.coords, {
-                    color: '#ff4500',
-                    weight: 1,
-                    fillOpacity: 0.2
-                }).bindPopup(municipality.name + ' Municipality (Sample Data)').addTo(municipalityLayer);
-            });
-            
-            // If checkbox is checked, add to map
-            if (document.getElementById('municipality-layer').checked) {
-                map.addLayer(municipalityLayer);
-            }
-            
-            document.getElementById('municipality-status').textContent = 'Sample data';
-        }
+        // Clear any existing layers
+        provinceLayer.clearLayers();
         
-        // Add sample barangays for demonstration
-        function addSampleBarangays() {
-            // Sample barangays (just for demonstration)
-            const barangays = [
-                {
-                    name: "Barangay 1",
-                    coords: [
-                        [16.62, 120.37],
-                        [16.62, 120.38],
-                        [16.61, 120.38],
-                        [16.61, 120.37]
-                    ]
-                },
-                {
-                    name: "Barangay 2",
-                    coords: [
-                        [16.06, 120.39],
-                        [16.06, 120.40],
-                        [16.05, 120.40],
-                        [16.05, 120.39]
-                    ]
-                }
-            ];
-            
-            // Clear any existing layers
-            barangayLayer.clearLayers();
-            
-            // Add sample barangays
-            barangays.forEach(barangay => {
-                L.polygon(barangay.coords, {
-                    color: '#ff6b6b',
-                    weight: 0.5,
-                    fillOpacity: 0.1
-                }).bindPopup(barangay.name + ' Barangay (Sample Data)').addTo(barangayLayer);
-            });
-            
-            // If checkbox is checked, add to map
-            if (document.getElementById('barangay-layer').checked) {
-                map.addLayer(barangayLayer);
-            }
-            
-            document.getElementById('barangay-status').textContent = 'Sample data';
-        }
-        
-        // Add sample region (just for demonstration)
-        function addSampleRegion() {
-            const region = L.polygon([
-                [18.5, 120],
-                [18.5, 122],
-                [16.5, 122],
-                [16.5, 120]
-            ], {
+        // Add sample provinces
+        provinces.forEach(province => {
+            L.polygon(province.coords, {
                 color: '#8b0000',
-                weight: 2,
-                fillOpacity: 0.1
-            }).bindPopup('Ilocos Region (Sample Data)').addTo(regionLayer);
+                fillColor: '#cc0000',
+                fillOpacity: 0.3,
+                weight: 2
+            }).bindPopup(`<strong>Province:</strong> ${province.name}`)
+            .addTo(provinceLayer);
+        });
+        
+        // Update status
+        document.getElementById('province-status').textContent = 'Sample data';
+        
+        // If checkbox is checked, add to map
+        if (document.getElementById('province-layer').checked) {
+            map.addLayer(provinceLayer);
         }
-        
-        // Call the function to load boundaries
-        loadProvinces();
-        addSampleRegion();
-        
-        // Set up layer control
-        const overlayMaps = {
-            "Regions": regionLayer,
-            "Provinces": provinceLayer,
-            "Municipalities": municipalityLayer,
-            "Barangays": barangayLayer
-        };
-        
-        L.control.layers(basemaps, overlayMaps, {
-            position: 'topright',
-            collapsed: false
-        }).addTo(map);
-        
-        // Panel toggle functionality
-        document.querySelectorAll('.panel-header').forEach(header => {
-            header.addEventListener('click', () => {
-                const panel = header.parentElement;
-                panel.classList.toggle('active');
-            });
-        });
-        
-        // Layer toggle functionality
-        document.getElementById('region-layer').addEventListener('change', (e) => {
-            if (e.target.checked) {
-                map.addLayer(regionLayer);
-            } else {
-                map.removeLayer(regionLayer);
+    }
+    
+    // Add sample municipalities for demonstration
+    function addSampleMunicipalities() {
+        // Sample municipalities (just for demonstration)
+        const municipalities = [
+            {
+                name: "San Fernando",
+                coords: [
+                    [17.4, 120.3],
+                    [17.4, 120.5],
+                    [17.3, 120.5],
+                    [17.3, 120.3]
+                ]
+            },
+            {
+                name: "Bauang",
+                coords: [
+                    [17.4, 120.5],
+                    [17.4, 120.7],
+                    [17.2, 120.7],
+                    [17.2, 120.5]
+                ]
             }
+        ];
+        
+        // Clear any existing layers
+        municipalityLayer.clearLayers();
+        
+        // Add sample municipalities
+        municipalities.forEach(municipality => {
+            L.polygon(municipality.coords, {
+                color: '#cc0000',
+                fillColor: '#ff4500',
+                fillOpacity: 0.2,
+                weight: 1
+            }).bindPopup(`<strong>Municipality:</strong> ${municipality.name}`)
+            .addTo(municipalityLayer);
         });
         
-        document.getElementById('province-layer').addEventListener('change', (e) => {
-            if (e.target.checked) {
-                // If provinces haven't loaded successfully, try to load them
+        // Update status
+        document.getElementById('municipality-status').textContent = 'Sample data';
+        
+        // If checkbox is checked, add to map
+        if (document.getElementById('municipality-layer').checked) {
+            map.addLayer(municipalityLayer);
+        }
+    }
+    
+    // Add sample barangays for demonstration
+    function addSampleBarangays() {
+        // Sample barangays (just for demonstration)
+        const barangays = [
+            {
+                name: "Barangay 1",
+                coords: [
+                    [17.35, 120.35],
+                    [17.35, 120.4],
+                    [17.3, 120.4],
+                    [17.3, 120.35]
+                ]
+            },
+            {
+                name: "Barangay 2",
+                coords: [
+                    [17.35, 120.4],
+                    [17.35, 120.45],
+                    [17.3, 120.45],
+                    [17.3, 120.4]
+                ]
+            }
+        ];
+        
+        // Clear any existing layers
+        barangayLayer.clearLayers();
+        
+        // Add sample barangays
+        barangays.forEach(barangay => {
+            L.polygon(barangay.coords, {
+                color: '#ff4500',
+                fillColor: '#ff6b6b',
+                fillOpacity: 0.1,
+                weight: 0.5
+            }).bindPopup(`<strong>Barangay:</strong> ${barangay.name}`)
+            .addTo(barangayLayer);
+        });
+        
+        // Update status
+        document.getElementById('barangay-status').textContent = 'Sample data';
+        
+        // If checkbox is checked, add to map
+        if (document.getElementById('barangay-layer').checked) {
+            map.addLayer(barangayLayer);
+        }
+    }
+    
+    // Add sample regions for demonstration
+    function addSampleRegions() {
+        // Sample regions (just for demonstration)
+        const regions = [
+            {
+                name: "Ilocos Region",
+                coords: [
+                    [18.5, 119.5],
+                    [18.5, 121.0],
+                    [15.8, 121.0],
+                    [15.8, 119.5]
+                ]
+            },
+            {
+                name: "Central Luzon",
+                coords: [
+                    [15.8, 119.5],
+                    [15.8, 121.5],
+                    [14.5, 121.5],
+                    [14.5, 119.5]
+                ]
+            }
+        ];
+        
+        // Clear any existing layers
+        regionLayer.clearLayers();
+        
+        // Add sample regions
+        regions.forEach(region => {
+            L.polygon(region.coords, {
+                color: '#8b0000',
+                fillColor: '#8b0000',
+                fillOpacity: 0.1,
+                weight: 3
+            }).bindPopup(`<strong>Region:</strong> ${region.name}`)
+            .addTo(regionLayer);
+        });
+    }
+    
+    // Load provinces when the page loads
+    window.addEventListener('load', function() {
+        loadProvinces();
+        addSampleRegions();
+        
+        // Add event listeners for layer checkboxes
+        document.getElementById('province-layer').addEventListener('change', function() {
+            if (this.checked) {
+                // If provinces haven't been loaded yet, load them
                 if (!loadedLayers.provinces) {
                     loadProvinces();
                 } else {
@@ -1238,9 +1159,9 @@ document.getElementById('satellite').checked = true;
             }
         });
         
-        document.getElementById('municipality-layer').addEventListener('change', (e) => {
-            if (e.target.checked) {
-                // Load municipalities if not already loaded
+        document.getElementById('municipality-layer').addEventListener('change', function() {
+            if (this.checked) {
+                // If municipalities haven't been loaded yet, load them
                 if (!loadedLayers.municipalities) {
                     loadMunicipalities();
                 } else {
@@ -1251,9 +1172,9 @@ document.getElementById('satellite').checked = true;
             }
         });
         
-        document.getElementById('barangay-layer').addEventListener('change', (e) => {
-            if (e.target.checked) {
-                // Load barangays if not already loaded
+        document.getElementById('barangay-layer').addEventListener('change', function() {
+            if (this.checked) {
+                // If barangays haven't been loaded yet, load them
                 if (!loadedLayers.barangays) {
                     loadBarangays();
                 } else {
@@ -1264,92 +1185,73 @@ document.getElementById('satellite').checked = true;
             }
         });
         
-        // Sidebar toggle functionality
-        document.getElementById('sidebar-toggle').addEventListener('click', () => {
+        // Toggle sidebar functionality
+        document.getElementById('sidebar-toggle').addEventListener('click', function() {
             const sidebar = document.getElementById('sidebar');
-            const toggleBtn = document.getElementById('sidebar-toggle');
+            const isHidden = sidebar.style.transform === 'translateX(-350px)';
             
-            if (sidebar.style.transform === 'translateX(-350px)') {
+            if (isHidden) {
                 sidebar.style.transform = 'translateX(0)';
-                toggleBtn.style.left = '350px';
-                toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+                this.innerHTML = '<i class="fas fa-chevron-left"></i>';
             } else {
                 sidebar.style.transform = 'translateX(-350px)';
-                toggleBtn.style.left = '0';
-                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                this.innerHTML = '<i class="fas fa-chevron-right"></i>';
             }
         });
         
-       
+        // Panel toggle functionality
+        document.querySelectorAll('.panel-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const panel = this.parentElement;
+                panel.classList.toggle('active');
+                
+                // Update chevron icon
+                const icon = this.querySelector('i');
+                if (panel.classList.contains('active')) {
+                    icon.className = 'fas fa-chevron-down';
+                } else {
+                    icon.className = 'fas fa-chevron-right';
+                }
+            });
+        });
+        
+        // Timeline slider functionality
+        const timelineSlider = document.getElementById('timeline-slider');
+        const timelineYear = document.getElementById('timeline-year');
+        
+        timelineSlider.addEventListener('input', function() {
+            timelineYear.textContent = this.value;
+        });
+        
+        // Year slider functionality
+        const yearSlider = document.getElementById('year-slider');
+        const yearValue = document.getElementById('year-value');
+        
+        yearSlider.addEventListener('input', function() {
+            yearValue.textContent = this.value;
+        });
+        
+        // Opacity slider functionality
+        const opacitySlider = document.getElementById('opacity-slider');
+        const opacityValue = document.getElementById('opacity-value');
+        
+        opacitySlider.addEventListener('input', function() {
+            opacityValue.textContent = this.value;
+        });
+        
         // Upload button functionality
-        document.getElementById('upload-btn').addEventListener('click', () => {
+        document.getElementById('upload-btn').addEventListener('click', function() {
             const uploadPanel = document.getElementById('upload-panel');
-            if (uploadPanel.style.display === 'block') {
-                uploadPanel.style.display = 'none';
-            } else {
-                uploadPanel.style.display = 'block';
+            uploadPanel.style.display = uploadPanel.style.display === 'block' ? 'none' : 'block';
+        });
+        
+        // Close button functionality (X mark)
+        document.getElementById('header').addEventListener('click', function(e) {
+            if (e.clientX > this.offsetWidth - 60) {
+                alert('Close button clicked! This would typically close the application.');
             }
         });
-        
-        // Close upload panel when clicking outside
-        document.addEventListener('click', (e) => {
-            const uploadPanel = document.getElementById('upload-panel');
-            const uploadBtn = document.getElementById('upload-btn');
-            
-            if (uploadPanel.style.display === 'block' && 
-                !uploadPanel.contains(e.target) && 
-                e.target !== uploadBtn) {
-                uploadPanel.style.display = 'none';
-            }
-        });
-        
-        // Slider functionality
-        document.getElementById('year-slider').addEventListener('input', (e) => {
-            document.getElementById('year-value').textContent = e.target.value;
-        });
-        
-        document.getElementById('timeline-slider').addEventListener('input', (e) => {
-            document.getElementById('timeline-year').textContent = e.target.value;
-        });
-        
-        document.getElementById('opacity-slider').addEventListener('input', (e) => {
-            document.getElementById('opacity-value').textContent = e.target.value;
-            
-            // Update layer opacities
-            if (loadedLayers.provinces) {
-                loadedLayers.provinces.setStyle({
-                    fillOpacity: e.target.value / 100 * 0.3
-                });
-            }
-            
-            if (loadedLayers.municipalities) {
-                loadedLayers.municipalities.setStyle({
-                    fillOpacity: e.target.value / 100 * 0.2
-                });
-            }
-            
-            if (loadedLayers.barangays) {
-                loadedLayers.barangays.setStyle({
-                    fillOpacity: e.target.value / 100 * 0.1
-                });
-            }
-        });
-        
-        // Add click event to show info panel
-        map.on('click', (e) => {
-            const infoPanel = document.getElementById('info-panel');
-            infoPanel.innerHTML = `
-                <h4>Location Information</h4>
-                <p><strong>Latitude:</strong> ${e.latlng.lat.toFixed(4)}</p>
-                <p><strong>Longitude:</strong> ${e.latlng.lng.toFixed(4)}</p>
-            `;
-            infoPanel.style.display = 'block';
-        });
-        
-        // Close info panel when clicking on the map
-        map.on('popupopen', () => {
-            document.getElementById('info-panel').style.display = 'none';
-        });
-    </script>
+    });
+</script>
 </body>
 </html>
