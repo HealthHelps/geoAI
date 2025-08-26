@@ -806,7 +806,7 @@
                     const normalized = (value - minTotal) / (maxTotal - minTotal);
                     
                     // Return a color from blue to red based on the normalized value
-                    const hue = ((1 - normalized) * 240); // Blue (240) to Red (0)
+                    const hue = (normalized * 240); // Red (0) to Blue (240)
                     return `hsl(${hue}, 100%, 50%)`;
                 }
                 
