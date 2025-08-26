@@ -482,10 +482,10 @@
                 <label for="basemap-select">Basemap:</label>
                 <select id="basemap-select">
                     <option value="osm">OpenStreetMap</option>
-                    <option value="satellite">Satellite</option>
+                    <option value="satellite" selected>Satellite</option>
                     <option value="terrain">Terrain</option>
                     <option value="dark">Dark</option>
-                </select>
+            </select>
             </div>
             
             <div class="upload-panel" id="upload-panel">
@@ -502,39 +502,39 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <script>
-        // Initialize the map
-        const map = L.map('map', {
-            center: [12.8797, 121.7740], // Philippines coordinates
-            zoom: 6,
-            minZoom: 5,
-            maxZoom: 18,
-            zoomControl: false
-        });
-        
-        // Add zoom control to top-right
-        L.control.zoom({
-            position: 'topright'
-        }).addTo(map);
-        
-        // Define basemaps
-        const basemaps = {
-            osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }),
-            satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-            }),
-            terrain: L.tileLayer('https://{s}.tile.openttopomap.org/{z}/{x}/{y}.png', {
-                attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://openttopomap.org">OpenTopoMap</a>'
-            }),
-            dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            })
-        };
-        
-        // Add default basemap
-        basemaps.osm.addTo(map);
+<script>
+    // Initialize the map
+    const map = L.map('map', {
+        center: [12.8797, 121.7740], // Philippines coordinates
+        zoom: 6,
+        minZoom: 5,
+        maxZoom: 18,
+        zoomControl: false
+    });
+    
+    // Add zoom control to top-right
+    L.control.zoom({
+        position: 'topright'
+    }).addTo(map);
+    
+    // Define basemaps
+    const basemaps = {
+        osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }),
+        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        }),
+        terrain: L.tileLayer('https://{s}.tile.openttopomap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://openttopomap.org">OpenTopoMap</a>'
+        }),
+        dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        })
+    };
+    
+    // Add default basemap (Satellite instead of OSM)
+    basemaps.satellite.addTo(map);
         
         // Add layer groups for boundaries
         const regionLayer = L.layerGroup().addTo(map);
