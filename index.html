@@ -310,41 +310,90 @@
         <h1 id="title">HealthHelp GeoAI</h1>
     </div>
     
-    <div id="main-container">
-        <div id="sidebar">
-            <div class="panel active">
-                <div class="panel-header">
-                    <span>Boundary Layers</span>
-                    <i class="fas fa-chevron-down"></i>
+<div id="main-container">
+    <div id="sidebar">
+        <!-- NEW BASEMAP PANEL ADDED AT THE TOP -->
+        <div class="panel active">
+            <div class="panel-header">
+                <span>Basemap</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="panel-content">
+                <select id="basemap-select" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+                    <option value="osm">OpenStreetMap</option>
+                    <option value="satellite" selected>Satellite</option>
+                    <option value="terrain">Terrain</option>
+                    <option value="dark">Dark</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- EXISTING BOUNDARY LAYERS PANEL (unchanged) -->
+        <div class="panel active">
+            <div class="panel-header">
+                <span>Boundary Layers</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="panel-content">
+                <div class="layer-control">
+                    <input type="checkbox" id="region-layer" checked>
+                    <label for="region-layer">Regions</label>
                 </div>
-                <div class="panel-content">
-                    <div class="layer-control">
-                        <input type="checkbox" id="region-layer" checked>
-                        <label for="region-layer">Regions</label>
-                    </div>
-                    <div class="layer-control">
-                        <input type="checkbox" id="province-layer" checked>
-                        <label for="province-layer">Provinces</label>
-                        <span id="province-status" class="layer-status">Loading...</span>
-                    </div>
-                    <div class="layer-control">
-                        <input type="checkbox" id="municipality-layer">
-                        <label for="municipality-layer">Municipalities</label>
-                        <span id="municipality-status" class="layer-status">Click to load</span>
-                    </div>
-                    <div class="layer-control">
-                        <input type="checkbox" id="barangay-layer">
-                        <label for="barangay-layer">Barangays</label>
-                        <span id="barangay-status" class="layer-status">Click to load</span>
-                    </div>
-                    <div class="warning-message" id="barangay-warning" style="display: none;">
-                        <i class="fas fa-exclamation-triangle"></i> Barangays data is large and may take time to load.
-                        <div class="progress-bar">
-                            <div class="progress-bar-fill" id="barangay-progress"></div>
-                        </div>
+                <div class="layer-control">
+                    <input type="checkbox" id="province-layer" checked>
+                    <label for="province-layer">Provinces</label>
+                    <span id="province-status" class="layer-status">Loading...</span>
+                </div>
+                <div class="layer-control">
+                    <input type="checkbox" id="municipality-layer">
+                    <label for="municipality-layer">Municipalities</label>
+                    <span id="municipality-status" class="layer-status">Click to load</span>
+                </div>
+                <div class="layer-control">
+                    <input type="checkbox" id="barangay-layer">
+                    <label for="barangay-layer">Barangays</label>
+                    <span id="barangay-status" class="layer-status">Click to load</span>
+                </div>
+                <div class="warning-message" id="barangay-warning" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i> Barangays data is large and may take time to load.
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill" id="barangay-progress"></div>
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- YOUR OTHER EXISTING PANELS CONTINUE HERE -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>Health Facilities</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <!-- ... health facilities content ... -->
+        </div>
+        
+        <div class="panel">
+            <div class="panel-header">
+                <span>Thematic Maps</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <!-- ... thematic maps content ... -->
+        </div>
+        
+        <div class="panel">
+            <div class="panel-header">
+                <span>GeoAI Tools</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <!-- ... geoAI tools content ... -->
+        </div>
+    </div>
+    
+    <!-- REST OF YOUR MAP CONTAINER CODE -->
+    <div id="map-container">
+        <!-- ... your map and other elements ... -->
+    </div>
+</div>
             
             <div class="panel">
                 <div class="panel-header">
