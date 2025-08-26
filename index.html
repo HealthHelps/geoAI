@@ -310,207 +310,41 @@
         <h1 id="title">HealthHelp GeoAI</h1>
     </div>
     
-<div id="main-container">
-    <div id="sidebar">
-        <!-- NEW BASEMAP PANEL -->
-        <div class="panel active">
-            <div class="panel-header">
-                <span>Basemap</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="panel-content">
-                <select id="basemap-select" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
-                    <option value="osm">OpenStreetMap</option>
-                    <option value="satellite" selected>Satellite</option>
-                    <option value="terrain">Terrain</option>
-                    <option value="dark">Dark</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- BOUNDARY LAYERS PANEL -->
-        <div class="panel active">
-            <div class="panel-header">
-                <span>Boundary Layers</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="panel-content">
-                <div class="layer-control">
-                    <input type="checkbox" id="region-layer" checked>
-                    <label for="region-layer">Regions</label>
+    <div id="main-container">
+        <div id="sidebar">
+            <div class="panel active">
+                <div class="panel-header">
+                    <span>Boundary Layers</span>
+                    <i class="fas fa-chevron-down"></i>
                 </div>
-                <div class="layer-control">
-                    <input type="checkbox" id="province-layer" checked>
-                    <label for="province-layer">Provinces</label>
-                    <span id="province-status" class="layer-status">Loading...</span>
-                </div>
-                <div class="layer-control">
-                    <input type="checkbox" id="municipality-layer">
-                    <label for="municipality-layer">Municipalities</label>
-                    <span id="municipality-status" class="layer-status">Click to load</span>
-                </div>
-                <div class="layer-control">
-                    <input type="checkbox" id="barangay-layer">
-                    <label for="barangay-layer">Barangays</label>
-                    <span id="barangay-status" class="layer-status">Click to load</span>
-                </div>
-                <div class="warning-message" id="barangay-warning" style="display: none;">
-                    <i class="fas fa-exclamation-triangle"></i> Barangays data is large and may take time to load.
-                    <div class="progress-bar">
-                        <div class="progress-bar-fill" id="barangay-progress"></div>
+                <div class="panel-content">
+                    <div class="layer-control">
+                        <input type="checkbox" id="region-layer" checked>
+                        <label for="region-layer">Regions</label>
+                    </div>
+                    <div class="layer-control">
+                        <input type="checkbox" id="province-layer" checked>
+                        <label for="province-layer">Provinces</label>
+                        <span id="province-status" class="layer-status">Loading...</span>
+                    </div>
+                    <div class="layer-control">
+                        <input type="checkbox" id="municipality-layer">
+                        <label for="municipality-layer">Municipalities</label>
+                        <span id="municipality-status" class="layer-status">Click to load</span>
+                    </div>
+                    <div class="layer-control">
+                        <input type="checkbox" id="barangay-layer">
+                        <label for="barangay-layer">Barangays</label>
+                        <span id="barangay-status" class="layer-status">Click to load</span>
+                    </div>
+                    <div class="warning-message" id="barangay-warning" style="display: none;">
+                        <i class="fas fa-exclamation-triangle"></i> Barangays data is large and may take time to load.
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" id="barangay-progress"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- HEALTH FACILITIES PANEL -->
-        <div class="panel">
-            <div class="panel-header">
-                <span>Health Facilities</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="panel-content">
-                <div class="layer-control">
-                    <input type="checkbox" id="rhu-layer">
-                    <label for="rhu-layer">Regional Health Units (RHUs)</label>
-                </div>
-                <div class="layer-control">
-                    <input type="checkbox" id="phu-layer">
-                    <label for="phu-layer">Provincial Health Units (PHUs)</label>
-                </div>
-                <div class="layer-control">
-                    <input type="checkbox" id="ruralhu-layer">
-                    <label for="ruralhu-layer">Rural Health Units</label>
-                </div>
-                <div class="layer-control">
-                    <input type="checkbox" id="bhc-layer">
-                    <label for="bhc-layer">Barangay Health Centers (BHCs)</label>
-                </div>
-                <div class="layer-control">
-                    <input type="checkbox" id="lyingin-layer">
-                    <label for="lyingin-layer">Lying-In Clinics</label>
-                </div>
-                
-                <div class="slider-container">
-                    <label>Services Filter:</label>
-                    <select id="services-filter" class="slider">
-                        <option value="all">All Services</option>
-                        <option value="mnch">Maternal, Newborn, and Child Health (MNCH)</option>
-                        <option value="fp">Family Planning (FP)</option>
-                        <option value="hiv">HIV/AIDS Health Services</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <!-- THEMATIC MAPS PANEL -->
-        <div class="panel">
-            <div class="panel-header">
-                <span>Thematic Maps</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="panel-content">
-                <button class="button" id="maternal-heatmap-btn">
-                    <i class="fas fa-baby"></i> Maternal & Child Death Rate
-                </button>
-                <button class="button" id="hiv-heatmap-btn">
-                    <i class="fas fa-virus"></i> HIV/AIDS Death Rate
-                </button>
-                <button class="button" id="facility-heatmap-btn">
-                    <i class="fas fa-hospital"></i> Health Facility Coverage
-                </button>
-                <button class="button" id="poverty-mnch-btn">
-                    <i class="fas fa-exclamation-triangle"></i> Poverty & MNCH Intersection
-                </button>
-                <button class="button" id="poverty-hiv-btn">
-                    <i class="fas fa-exclamation-triangle"></i> Poverty & HIV Intersection
-                </button>
-                
-                <div class="slider-container">
-                    <label for="year-slider">Year: <span id="year-value">2023</span></label>
-                    <input type="range" id="year-slider" class="slider" min="2010" max="2025" value="2023" step="1">
-                </div>
-                
-                <div class="slider-container">
-                    <label for="opacity-slider">Opacity: <span id="opacity-value">70</span>%</label>
-                    <input type="range" id="opacity-slider" class="slider" min="0" max="100" value="70" step="1">
-                </div>
-            </div>
-        </div>
-
-        <!-- GEOAI TOOLS PANEL -->
-        <div class="panel">
-            <div class="panel-header">
-                <span>GeoAI Tools</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="panel-content">
-                <button class="button" id="upload-btn">
-                    <i class="fas fa-upload"></i> Upload Data
-                </button>
-                <button class="button" id="analyze-btn">
-                    <i class="fas fa-chart-line"></i> Analyze Data
-                </button>
-                <button class="button" id="predict-btn">
-                    <i class="fas fa-robot"></i> Predict Trends
-                </button>
-                <button class="button" id="export-btn">
-                    <i class="fas fa-download"></i> Export Map
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- MAP CONTAINER (unchanged) -->
-    <div id="map-container">
-        <div id="map"></div>
-        
-        <button class="toggle-sidebar" id="sidebar-toggle">
-            <i class="fas fa-chevron-left"></i>
-        </button>
-        
-        <div class="legend" id="legend">
-            <h4>Boundary Layers</h4>
-            <div class="legend-item">
-                <div class="legend-color" style="background-color: #8b0000;"></div>
-                <span>Regions</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background-color: #cc0000;"></div>
-                <span>Provinces</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background-color: #ff4500;"></div>
-                <span>Municipalities</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background-color: #ff6b6b;"></div>
-                <span>Barangays</span>
-            </div>
-        </div>
-        
-        <div class="info-panel" id="info-panel">
-            <h4>Location Information</h4>
-            <p>Click on the map to get information</p>
-        </div>
-        
-        <div class="year-slider-container" id="year-slider-container">
-            <label for="timeline-slider">Timeline: <span id="timeline-year">2023</span></label>
-            <input type="range" id="timeline-slider" class="slider" min="2010" max="2025" value="2023" step="1">
-        </div>
-        
-        <!-- REMOVE the standalone basemap-selector from here -->
-        
-        <div class="upload-panel" id="upload-panel">
-            <h4>Upload Geospatial Data</h4>
-            <input type="file" id="file-upload" accept=".shp,.geojson,.kml,.gpkg" multiple>
-            <p>Supported formats: Shapefile, GeoJSON, KML</p>
-            <button class="button" id="process-upload">
-                <i class="fas fa-cog"></i> Process Data
-            </button>
-        </div>
-    </div>
-</div>
             
             <div class="panel">
                 <div class="panel-header">
