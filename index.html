@@ -651,28 +651,7 @@
         
         <div id="map-container">
             <div id="map"></div>
-
-                <!-- Add the basemap selector here -->
-    <div class="basemap-selector" id="basemap-selector">
-        <h4>Base Maps</h4>
-        <div class="basemap-option">
-            <input type="radio" id="osm" name="basemap" value="osm">
-            <label for="osm">OpenStreetMap</label>
-        </div>
-        <div class="basemap-option">
-            <input type="radio" id="satellite" name="basemap" value="satellite" checked>
-            <label for="satellite">Satellite</label>
-        </div>
-        <div class="basemap-option">
-            <input type="radio" id="terrain" name="basemap" value="terrain">
-            <label for="terrain">Terrain</label>
-        </div>
-        <div class="basemap-option">
-            <input type="radio" id="dark" name="basemap" value="dark">
-            <label for="dark">Dark</label>
-        </div>
-    </div>
-            
+           
             <button class="toggle-sidebar" id="sidebar-toggle">
                 <i class="fas fa-chevron-left"></i>
             </button>
@@ -755,7 +734,9 @@
     // Add default basemap (Satellite instead of OSM)
 basemaps.satellite.addTo(map);
 
-// Basemap selector functionality
+});
+
+    // Basemap selector functionality
 document.querySelectorAll('input[name="basemap"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
         // Remove all basemaps
